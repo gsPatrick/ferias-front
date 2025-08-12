@@ -1,0 +1,69 @@
+/* src/app/(dashboard)/relatorios/relatorios.module.css */
+.container {
+    display: flex;
+    flex-direction: column;
+    gap: 2.5rem;
+}
+
+.reportSection {
+    background-color: var(--cor-branco);
+    padding: 2rem 2.5rem;
+    border-radius: var(--raio-borda);
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+    border: 1px solid #E5E7EB;
+}
+
+.sectionHeader {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid #E5E7EB;
+    padding-bottom: 1rem;
+}
+
+.sectionHeader h2 {
+    font-size: 1.5rem;
+    color: var(--cor-texto-principal);
+    font-family: var(--font-poppins);
+}
+
+.sectionIcon {
+    width: 32px;
+    height: 32px;
+}
+
+.reportControls {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    font-size: 0.875rem;
+    color: var(--cor-cinza-medio);
+    flex-wrap: wrap;
+}
+
+.controlInput {
+    padding: 0.5rem 0.75rem;
+    border-radius: var(--raio-borda);
+    border: 1px solid #D1D5DB;
+    max-width: 120px;
+    text-align: center;
+}
+
+.exportButton {
+    margin-left: auto;
+}
+
+.reportDescription {
+    color: var(--cor-cinza-medio);
+    font-size: 0.875rem;
+    margin-top: 1rem;
+    border-top: 1px solid #E5E7EB;
+    padding-top: 1rem;
+}
+
+.chartContainer {
+    width: 100%;
+    min-height: 350px;
+}

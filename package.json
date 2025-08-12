@@ -9,8 +9,17 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
+    "@tanstack/react-virtual": "^3.13.12",
+    "axios": "^1.11.0",
+    "framer-motion": "^12.23.12",
+    "lucide-react": "^0.539.0",
+    "next": "15.4.6",
     "react": "19.1.0",
     "react-dom": "19.1.0",
-    "next": "15.4.6"
+    "react-dropzone": "^14.3.8",
+    "recharts": "^3.1.2",
+    "xlsx": "^0.18.5"
   }
 }

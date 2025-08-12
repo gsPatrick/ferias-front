@@ -1,0 +1,22 @@
+/* src/components/Header/Header.module.css */
+
+.header {
+    position: fixed;
+    top: 0;
+    /* Ocupa o espaço à direita da sidebar */
+    left: var(--largura-sidebar); 
+    width: calc(100% - var(--largura-sidebar));
+    height: var(--altura-header);
+    background-color: var(--cor-branco);
+    border-bottom: 1px solid #E5E7EB;
+    display: flex;
+    align-items: center;
+    padding: 0 2rem;
+    z-index: 10; /* Garante que fique acima do conteúdo da página */
+}
+
+.title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--cor-texto-principal);
+}

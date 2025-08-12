@@ -1,0 +1,102 @@
+/* src/components/Sidebar/Sidebar.module.css */
+
+.sidebar {
+    width: var(--largura-sidebar);
+    height: 100vh;
+    position: fixed;
+    left: 0;
+    top: 0;
+    background-color: var(--cor-branco);
+    border-right: 1px solid #E5E7EB; /* Cinza um pouco mais claro que o --cor-fundo */
+    display: flex;
+    flex-direction: column;
+    padding: 1.5rem 1rem;
+    transition: width 0.3s ease;
+}
+
+.logoContainer {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 2.5rem;
+    padding: 0 0.5rem;
+}
+
+.logoTitle {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--cor-primaria-profundo);
+    font-family: var(--font-poppins);
+}
+
+.nav ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.navLink {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    border-radius: var(--raio-borda);
+    color: var(--cor-cinza-medio);
+    font-weight: 500;
+    transition: background-color 0.2s ease, color 0.2s ease;
+    text-decoration: none;
+}
+
+.navLink:hover {
+    background-color: var(--cor-fundo);
+    color: var(--cor-primaria-medio);
+}
+
+.navLink.active {
+    background-color: var(--cor-primaria-medio);
+    color: var(--cor-branco);
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+}
+
+.userSection {
+    margin-top: auto; /* Empurra para o final */
+    border-top: 1px solid #E5E7EB;
+    padding-top: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.userInfo {
+    display: flex;
+    flex-direction: column;
+}
+
+.userName {
+    font-weight: 600;
+    font-size: 0.875rem;
+    color: var(--cor-texto-principal);
+}
+
+.userEmail {
+    font-size: 0.75rem;
+    color: var(--cor-cinza-medio);
+}
+
+.logoutButton {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--cor-cinza-medio);
+    padding: 0.5rem;
+    border-radius: var(--raio-borda);
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.logoutButton:hover {
+    background-color: #FEE2E2; /* Vermelho bem claro para hover */
+    color: var(--cor-feedback-erro);
+}

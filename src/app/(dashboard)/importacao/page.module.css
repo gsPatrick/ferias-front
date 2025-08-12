@@ -1,0 +1,136 @@
+/* src/app/(dashboard)/importacao/page.module.css */
+.container {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.header {
+    text-align: center;
+}
+
+.header h1 {
+    font-size: 2rem;
+    color: var(--cor-texto-principal);
+    margin-bottom: 0.5rem;
+}
+
+.header p {
+    color: var(--cor-cinza-medio);
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.uploadCard {
+    background-color: var(--cor-branco);
+    border-radius: var(--raio-borda);
+    padding: 2.5rem;
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05);
+    border: 1px solid #E5E7EB;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.dropzone {
+    border: 2px dashed #D1D5DB;
+    border-radius: var(--raio-borda);
+    padding: 3rem;
+    text-align: center;
+    color: var(--cor-cinza-medio);
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+}
+
+.dropzone.active {
+    border-color: var(--cor-primaria-medio);
+    background-color: #EFF6FF;
+}
+
+.dropzone:hover {
+    border-color: var(--cor-primaria-claro);
+}
+
+.uploadIcon {
+    color: var(--cor-primaria-medio);
+    margin-bottom: 1rem;
+}
+
+.dropzone p strong {
+    color: var(--cor-primaria-medio);
+    font-weight: 600;
+}
+
+.fileHint {
+    display: block;
+    margin-top: 0.5rem;
+    font-size: 0.875rem;
+}
+
+.filePreview {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    background-color: var(--cor-fundo);
+    padding: 0.75rem 1rem;
+    border-radius: var(--raio-borda);
+    color: var(--cor-texto-principal);
+}
+
+.filePreview span:last-child {
+    margin-left: auto;
+    color: var(--cor-cinza-medio);
+    font-size: 0.875rem;
+}
+
+.statusMessage {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem;
+    border-radius: var(--raio-borda);
+    font-weight: 500;
+}
+
+.statusMessage.success {
+    background-color: #D1FAE5;
+    color: #065F46;
+}
+
+.statusMessage.error {
+    background-color: #FEF2F2;
+    color: #991B1B;
+}
+
+.actions {
+    display: flex;
+    justify-content: center;
+}
+
+.instructions {
+    margin-top: 1rem;
+    padding: 2rem;
+    background-color: var(--cor-fundo);
+    border-radius: var(--raio-borda);
+}
+
+.instructions h2 {
+    margin-bottom: 1rem;
+}
+
+.instructions p {
+    margin-bottom: 1rem;
+    color: var(--cor-cinza-medio);
+}
+
+.columnList {
+    display: block;
+    background-color: #1F2937; /* Cinza escuro */
+    color: #D1D5DB;
+    padding: 1rem;
+    border-radius: var(--raio-borda);
+    font-family: var(--font-roboto-mono);
+    font-size: 0.875rem;
+    white-space: pre-wrap;
+    word-break: break-all;
+}

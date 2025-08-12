@@ -1,0 +1,179 @@
+/* src/app/(dashboard)/funcionarios/[matricula]/page.module.css */
+.container {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.loadingContainer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 60vh;
+    font-size: 1.25rem;
+    color: var(--cor-cinza-medio);
+}
+
+.profileHeader {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    background-color: var(--cor-branco);
+    padding: 2rem;
+    border-radius: var(--raio-borda);
+}
+
+.avatar {
+    width: 80px;
+    height: 80px;
+    min-width: 80px;
+    border-radius: 50%;
+    background-color: var(--cor-primaria-profundo);
+    color: var(--cor-branco);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5rem;
+    font-weight: 700;
+}
+
+.headerInfo {
+    flex-grow: 1;
+}
+
+.headerInfo h1 {
+    font-size: 2rem;
+    margin-bottom: 0.25rem;
+}
+
+.headerInfo p {
+    color: var(--cor-cinza-medio);
+}
+
+.headerActions {
+    margin-left: auto;
+}
+
+.statusBadgeAtivo {
+    color: var(--cor-feedback-sucesso);
+    font-weight: 600;
+}
+
+.cardsGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+}
+
+.tabs {
+    display: flex;
+    border-bottom: 2px solid #E5E7EB;
+}
+
+.tabs button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 1rem 1.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--cor-cinza-medio);
+    position: relative;
+    top: 2px;
+    transition: color 0.2s, border-color 0.2s;
+}
+
+.tabs button.activeTab {
+    color: var(--cor-primaria-medio);
+    border-bottom: 2px solid var(--cor-primaria-medio);
+}
+
+.tabContent {
+    background-color: var(--cor-branco);
+    padding: 2.5rem;
+    border-radius: var(--raio-borda);
+}
+
+.formContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 2.5rem;
+}
+
+.formSectionTitle {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--cor-primaria-profundo);
+    border-bottom: 1px solid #E5E7EB;
+    padding-bottom: 0.75rem;
+}
+
+.formGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.formGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.formGroup label {
+    font-weight: 500;
+    font-size: 0.875rem;
+}
+
+.formGroup input,
+.formGroup select {
+    padding: 0.75rem;
+    border: 1px solid #D1D5DB;
+    border-radius: var(--raio-borda);
+    font-size: 0.875rem;
+    background-color: var(--cor-branco);
+}
+
+.formActions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 1rem;
+}
+
+.tableSectionContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.tableHeader {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.modalContent {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.modalContent p {
+    line-height: 1.6;
+}
+
+.modalContent p strong {
+    color: var(--cor-primaria-profundo);
+}
+
+.modalFormGrid {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.modalActions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    margin-top: 1.5rem;
+}

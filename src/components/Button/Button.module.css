@@ -1,0 +1,62 @@
+/* src/components/Button/Button.module.css */
+.button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.625rem 1.25rem;
+    border-radius: var(--raio-borda);
+    font-size: 0.875rem;
+    font-weight: 600;
+    font-family: var(--font-inter);
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    white-space: nowrap;
+}
+
+.button:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.3);
+}
+
+.button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Variante Primária */
+.primary {
+    background-color: var(--cor-primaria-medio);
+    color: var(--cor-branco);
+}
+.primary:hover:not(:disabled) {
+    background-color: var(--cor-primaria-profundo);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(37, 99, 235, 0.2);
+}
+
+/* Variante Secundária */
+.secondary {
+    background-color: var(--cor-branco);
+    color: var(--cor-primaria-profundo);
+    border-color: #D1D5DB;
+}
+.secondary:hover:not(:disabled) {
+    border-color: var(--cor-primaria-profundo);
+    color: var(--cor-primaria-profundo);
+}
+
+/* Variante de Perigo */
+.danger {
+    background-color: var(--cor-feedback-erro);
+    color: var(--cor-branco);
+}
+.danger:hover:not(:disabled) {
+    background-color: #B91C1C; /* Vermelho mais escuro */
+}
+
+.icon {
+    display: flex;
+    align-items: center;
+}

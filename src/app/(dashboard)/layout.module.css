@@ -1,0 +1,19 @@
+/* src/app/(dashboard)/layout.module.css */
+.layout {
+    display: flex;
+    min-height: 100vh;
+}
+
+.mainContainer {
+    flex: 1;
+    margin-left: var(--largura-sidebar);
+    display: flex;
+    flex-direction: column;
+}
+
+.content {
+    padding: 2rem;
+    margin-top: var(--altura-header); 
+    background-color: var(--cor-fundo);
+    flex-grow: 1;
+}

@@ -1,0 +1,56 @@
+/* src/components/Modal/Modal.module.css */
+.backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(17, 24, 39, 0.6); /* --cor-texto-principal com opacidade */
+    backdrop-filter: blur(4px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 50;
+}
+
+.modalContent {
+    background-color: var(--cor-branco);
+    border-radius: var(--raio-borda);
+    box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+    width: 100%;
+    max-width: 500px;
+    overflow: hidden;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid #E5E7EB;
+}
+
+.title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--cor-texto-principal);
+}
+
+.closeButton {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--cor-cinza-medio);
+    padding: 0.25rem;
+    border-radius: 50%;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.closeButton:hover {
+    background-color: var(--cor-fundo);
+    color: var(--cor-texto-principal);
+}
+
+.body {
+    padding: 1.5rem;
+}

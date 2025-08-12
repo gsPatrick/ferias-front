@@ -1,0 +1,100 @@
+/* src/app/login/login.module.css */
+.container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background-color: var(--cor-fundo);
+}
+
+.loginBox {
+    background-color: var(--cor-branco);
+    padding: 2.5rem 3rem;
+    border-radius: var(--raio-borda);
+    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    width: 100%;
+    max-width: 400px;
+    text-align: center;
+}
+
+.logoContainer {
+    margin-bottom: 2rem;
+}
+
+.logoIcon {
+    color: var(--cor-primaria-medio);
+}
+
+.title {
+    font-size: 1.5rem;
+    color: var(--cor-primaria-profundo);
+    margin-top: 0.5rem;
+}
+
+.subtitle {
+    color: var(--cor-cinza-medio);
+    margin-top: 0.25rem;
+}
+
+.form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.inputGroup {
+    position: relative;
+}
+
+.inputIcon {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--cor-cinza-medio);
+}
+
+.input {
+    width: 100%;
+    padding: 0.875rem 1rem 0.875rem 3rem; /* Espaço para o ícone */
+    border: 1px solid #D1D5DB;
+    border-radius: var(--raio-borda);
+    font-family: var(--font-inter);
+    font-size: 1rem;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.input:focus {
+    outline: none;
+    border-color: var(--cor-primaria-medio);
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+}
+
+.forgotPassword {
+    text-align: right;
+    font-size: 0.875rem;
+    color: var(--cor-primaria-medio);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.forgotPassword:hover {
+    text-decoration: underline;
+}
+
+.loginButton {
+    background-color: var(--cor-primaria-medio);
+    color: var(--cor-branco);
+    padding: 0.875rem;
+    border: none;
+    border-radius: var(--raio-borda);
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    text-decoration: none;
+}
+
+.loginButton:hover {
+    background-color: var(--cor-primaria-profundo);
+}

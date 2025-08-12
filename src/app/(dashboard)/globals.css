@@ -1,0 +1,54 @@
+/* src/styles/globals.css */
+
+/* 1. Reset Básico e Definição da Paleta de Cores (CSS Variables) */
+:root {
+  /* Cores Primárias */
+  --cor-primaria-profundo: #1E3A8A;
+  --cor-primaria-medio: #2563EB;
+  --cor-primaria-claro: #60A5FA;
+  
+  /* Cores Secundárias */
+  --cor-fundo: #F3F4F6;
+  --cor-cinza-medio: #9CA3AF;
+  --cor-texto-principal: #111827;
+  --cor-branco: #FFFFFF;
+
+  /* Cores de Feedback */
+  --cor-feedback-sucesso: #16A34A;
+  --cor-feedback-erro: #DC2626;
+  --cor-feedback-alerta: #F59E0B;
+
+  /* Tipografia (será definida no layout.js) */
+  --font-poppins: var(--font-poppins-local);
+  --font-inter: var(--font-inter-local);
+  --font-roboto-mono: var(--font-roboto-mono-local);
+
+  /* Outras variáveis de layout */
+  --raio-borda: 8px;
+  --altura-header: 64px;
+  --largura-sidebar: 240px;
+}
+
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+html,
+body {
+  max-width: 100vw;
+  overflow-x: hidden;
+  font-family: var(--font-inter);
+  color: var(--cor-texto-principal);
+  background-color: var(--cor-fundo);
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-poppins);
+}

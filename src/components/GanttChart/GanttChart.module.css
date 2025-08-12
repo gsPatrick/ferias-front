@@ -1,0 +1,81 @@
+/* src/components/GanttChart/GanttChart.module.css */
+.ganttContainer {
+    width: 100%;
+    background-color: var(--cor-branco);
+    border: 1px solid #E5E7EB;
+    border-radius: var(--raio-borda);
+    overflow-x: auto;
+}
+
+.timelineHeader {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    background-color: var(--cor-fundo);
+    border-bottom: 1px solid #E5E7EB;
+}
+
+.month {
+    text-align: center;
+    padding: 0.75rem 0;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--cor-cinza-medio);
+    border-right: 1px solid #E5E7EB;
+}
+.month:last-child {
+    border-right: none;
+}
+
+.ganttBody {
+    position: relative;
+}
+
+.ganttRow {
+    display: flex;
+    border-bottom: 1px solid #E5E7EB;
+}
+.ganttRow:last-child {
+    border-bottom: none;
+}
+
+.rowLabel {
+    width: 200px;
+    min-width: 200px;
+    padding: 1rem 1.5rem;
+    font-weight: 500;
+    border-right: 1px solid #E5E7EB;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.rowTimeline {
+    flex-grow: 1;
+    position: relative;
+    background-image: repeating-linear-gradient(to right, #E5E7EB 0, #E5E7EB 1px, transparent 1px, transparent calc(100% / 12));
+}
+
+.ganttBar {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    height: 60%;
+    background-color: rgba(37, 99, 235, 0.7);
+    border: 1px solid var(--cor-primaria-profundo);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+    color: var(--cor-branco);
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+.ganttBar:hover {
+    background-color: var(--cor-primaria-profundo);
+}
+.barLabel {
+    padding: 0 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    white-space: nowrap;
+}

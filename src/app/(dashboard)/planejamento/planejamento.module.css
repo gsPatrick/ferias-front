@@ -1,0 +1,140 @@
+/* src/app/(dashboard)/planejamento/planejamento.module.css */
+.container {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.summaryCards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+}
+
+.controlsHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+    padding: 1rem 1.5rem;
+    background-color: var(--cor-branco);
+    border-radius: var(--raio-borda);
+    border: 1px solid #E5E7EB;
+}
+
+.searchContainer {
+    position: relative;
+    flex-grow: 1;
+    max-width: 400px;
+}
+
+.searchIcon {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--cor-cinza-medio);
+}
+
+.searchInput {
+    width: 100%;
+    padding: 0.75rem 1rem 0.75rem 3rem;
+    border: 1px solid #D1D5DB;
+    border-radius: var(--raio-borda);
+    font-size: 0.875rem;
+}
+
+.actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.viewToggle {
+    display: flex;
+    background-color: var(--cor-fundo);
+    border-radius: var(--raio-borda);
+    padding: 4px;
+}
+
+.viewToggle button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.5rem 0.75rem;
+    border-radius: 6px;
+    color: var(--cor-cinza-medio);
+    transition: all 0.2s;
+}
+
+.viewToggle button:hover {
+    color: var(--cor-texto-principal);
+}
+
+.viewToggle button.activeView {
+    background-color: var(--cor-branco);
+    color: var(--cor-primaria-medio);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.statusBadge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.statusConfirmada {
+    background-color: #D1FAE5;
+    color: #065F46;
+}
+
+.statusPlanejada {
+    background-color: #DBEAFE;
+    color: #1E40AF;
+}
+
+.statusSolicitada {
+    background-color: #FEF3C7;
+    color: #92400E;
+}
+
+.statusDefault {
+    background-color: #F3F4F6;
+    color: #4B5563;
+}
+
+.modalBody {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+.modalBody p {
+    color: var(--cor-cinza-medio);
+    line-height: 1.6;
+}
+.formGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+.formGroup label {
+    font-weight: 500;
+    font-size: 0.875rem;
+    color: var(--cor-texto-principal);
+}
+.modalInput {
+    padding: 0.75rem;
+    border: 1px solid #D1D5DB;
+    border-radius: var(--raio-borda);
+    font-size: 1rem;
+}
+.modalActions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    margin-top: 1rem;
+}

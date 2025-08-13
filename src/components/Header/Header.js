@@ -13,6 +13,8 @@ const navItems = [
     { href: '/funcionarios', label: 'Funcionários' },
     { href: '/importacao', label: 'Importar Planilha' },
         { href: '/planejamento', label: 'Planejamento' },
+                { href: '/usuarios', label: 'Usuarios' },
+
 
 ];
 

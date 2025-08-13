@@ -2,7 +2,7 @@
 'use client';
 
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import styles from './Dashboard.module.css'; // O CSS virá da página principal
+import styles from './dashboard.module.css'; // O CSS virá da página principal
 
 const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {

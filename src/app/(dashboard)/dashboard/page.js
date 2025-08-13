@@ -8,7 +8,7 @@ import api from '@/services/api';
 import Card from '@/components/Card/Card';
 import DashboardChart from './DashboardChart';
 import Button from '@/components/Button/Button';
-import styles from './Dashboard.module.css';
+import styles from './dashboard.module.css';
 import { Users, CalendarCheck, Percent, AlertTriangle, AlertOctagon, Info, CalendarX, RefreshCw } from 'lucide-react';
 
 // --- COMPONENTE INTERNO PARA ITENS DE AÇÃO ---

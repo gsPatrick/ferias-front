@@ -3,7 +3,7 @@
 import axios from 'axios';
 
 const apiClient = axios.create({
-  baseURL: 'https://geral-xlxsapi.r954jc.easypanel.host/api',
+  baseURL: 'https://localhost:3000/api',
   headers: {
     'Content-Type': 'application/json',
   },

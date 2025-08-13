@@ -6,14 +6,18 @@
 
 .mainContainer {
     flex: 1;
-    margin-left: var(--largura-sidebar);
+    /* Removido: margin-left baseado na sidebar */
     display: flex;
     flex-direction: column;
+    transition: margin-left 0.3s ease;
 }
 
+/* Removido: .mainContainer.mainContainerCollapsed */
+
 .content {
-    padding: 2rem;
     margin-top: var(--altura-header); 
     background-color: var(--cor-fundo);
     flex-grow: 1;
 }
+
+/* Removido: Media query para responsividade */

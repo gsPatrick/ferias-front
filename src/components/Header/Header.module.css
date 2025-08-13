@@ -3,20 +3,172 @@
 .header {
     position: fixed;
     top: 0;
-    /* Ocupa o espaço à direita da sidebar */
-    left: var(--largura-sidebar); 
-    width: calc(100% - var(--largura-sidebar));
+    left: 0;
+    width: 100%;
     height: var(--altura-header);
     background-color: var(--cor-branco);
     border-bottom: 1px solid #E5E7EB;
     display: flex;
     align-items: center;
+    justify-content: space-between;
     padding: 0 2rem;
-    z-index: 10; /* Garante que fique acima do conteúdo da página */
+    z-index: 10;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
 
-.title {
-    font-size: 1.5rem;
-    font-weight: 600;
+.headerLeft {
+    display: flex;
+    align-items: center;
+}
+
+.logoContainer {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    text-decoration: none;
+}
+
+.logo {
+    border-radius: var(--raio-borda);
+}
+
+.logoTitle {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--cor-primaria-profundo);
+    font-family: var(--font-poppins);
+}
+
+.nav ul {
+    list-style: none;
+    display: flex;
+    gap: 1.5rem;
+    margin: 0;
+    padding: 0;
+}
+
+.navLink {
+    font-weight: 500;
+    color: var(--cor-cinza-medio);
+    padding: 0.5rem;
+    transition: color 0.2s, border-bottom 0.2s;
+    border-bottom: 2px solid transparent;
+}
+
+.navLink:hover {
+    color: var(--cor-primaria-medio);
+}
+
+.navLink.active {
+    color: var(--cor-primaria-profundo);
+    border-bottom-color: var(--cor-primaria-medio);
+}
+
+.headerRight {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.userInfo {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
     color: var(--cor-texto-principal);
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+.logoutButton {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--cor-cinza-medio);
+    padding: 0.5rem;
+    border-radius: var(--raio-borda);
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.logoutButton:hover {
+    background-color: #FEE2E2;
+    color: var(--cor-feedback-erro);
+}
+
+/* Botão de menu hamburguer (visível apenas em mobile) */
+.menuToggle {
+    display: none;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--cor-texto-principal);
+}
+
+.closeMenuButton {
+    display: none; /* Escondido por padrão */
+}
+
+/* --- Responsividade --- */
+@media (max-width: 768px) {
+    .header {
+        padding: 0 1rem;
+    }
+    
+    .logoTitle {
+        font-size: 1rem; /* Reduz o tamanho da fonte da logo */
+    }
+
+    .userInfo {
+        display: none; /* Oculta a informação do usuário para economizar espaço */
+    }
+
+    .menuToggle {
+        display: block; /* Mostra o botão hamburguer */
+    }
+
+    .nav {
+        display: none; /* Esconde a navegação por padrão */
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100vh;
+        background-color: var(--cor-branco);
+        z-index: 99;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .nav.navOpen {
+        display: flex; /* Mostra a navegação quando o menu está aberto */
+    }
+
+    .nav ul {
+        flex-direction: column;
+        gap: 2rem;
+        text-align: center;
+    }
+
+    .navLink {
+        font-size: 1.5rem;
+        padding: 1rem;
+        color: var(--cor-texto-principal);
+    }
+    
+    .navLink.active {
+        border-bottom: none;
+        color: var(--cor-primaria-medio);
+        font-weight: 700;
+    }
+
+    .closeMenuButton {
+        display: block;
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        background: none;
+        border: none;
+        cursor: pointer;
+        color: var(--cor-cinza-medio);
+    }
 }

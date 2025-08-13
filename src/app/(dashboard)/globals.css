@@ -26,7 +26,7 @@
   /* Outras variáveis de layout */
   --raio-borda: 8px;
   --altura-header: 64px;
-  --largura-sidebar: 240px;
+  /* Removidas: --largura-sidebar e --largura-sidebar-min */
 }
 
 * {

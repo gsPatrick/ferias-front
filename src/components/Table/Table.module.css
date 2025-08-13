@@ -1,68 +1,160 @@
 /* src/components/Table/Table.module.css */
+/* CONTEÚDO CORRIGIDO E CONSOLIDADO */
+
+/* --- ESTILOS DA TABELA (DESKTOP) --- */
 .tableContainer {
     width: 100%;
-    overflow-x: auto; /* Garante rolagem horizontal em telas pequenas */
-    background-color: var(--cor-branco);
-    border: 1px solid #E5E7EB;
-    border-radius: var(--raio-borda);
-    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.05);
+    overflow-x: auto;
+    background-color: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    border: 1px solid #e2e8f0;
+    position: relative;
 }
 
 .table {
     width: 100%;
     border-collapse: collapse;
     font-size: 0.875rem;
+    min-width: 900px;
+    background-color: #ffffff;
 }
 
 .table th, .table td {
-    padding: 0.875rem 1.5rem;
+    padding: 1rem 1.5rem;
     text-align: left;
-    border-bottom: 1px solid #E5E7EB;
+    border-bottom: 1px solid #e2e8f0;
+    vertical-align: middle;
     white-space: nowrap;
 }
 
 .table thead th {
-    background-color: var(--cor-fundo);
-    font-family: var(--font-poppins);
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
     font-weight: 600;
-    color: var(--cor-cinza-medio);
+    color: #475569;
     text-transform: uppercase;
     font-size: 0.75rem;
     letter-spacing: 0.5px;
-}
-
-.table tbody tr:last-child td {
-    border-bottom: none;
+    position: sticky;
+    top: 0;
+    z-index: 10;
 }
 
 .table tbody tr:hover {
-    background-color: #F9FAFB; /* Cinza ainda mais claro */
+    background-color: #f8fafc;
 }
 
-/* NOVOS ESTILOS PARA SELEÇÃO */
 .checkboxCell {
-    width: 1%;
-    padding-right: 0.5rem;
-    padding-left: 1.5rem;
+    width: 50px;
+    text-align: center;
 }
+
 .checkboxCell input {
     cursor: pointer;
-    width: 16px;
-    height: 16px;
+    width: 18px;
+    height: 18px;
+    accent-color: #3b82f6;
 }
-.selectedRow {
-    background-color: #EFF6FF !important; /* Azul muito claro */
-}
-.selectedRow td {
-    border-bottom-color: #DBEAFE;
-}
-/* FIM DOS NOVOS ESTILOS */
 
+.selectedRow {
+    background: #e9f5ff !important;
+    border-left: 3px solid #3b82f6;
+}
+
+.selectedRow td {
+    font-weight: 500;
+    color: #1e3a8a;
+}
+
+/* --- ESTILOS DOS CARDS (MOBILE) --- */
+.cardContainer {
+    display: none; /* Escondido por padrão */
+}
+
+.employeeCard {
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.06);
+    border: 1px solid #e2e8f0;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.employeeCard:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+}
+
+.selectedCard {
+    background: #e9f5ff;
+    border-color: #93c5fd;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+}
+
+.cardHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+}
+
+.cardTitle { flex: 1; }
+.cardName { font-size: 1.1rem; font-weight: 600; color: #1e293b; margin-bottom: 0.25rem; }
+.cardMatricula { font-size: 0.85rem; color: #64748b; }
+.cardCheckbox { flex-shrink: 0; }
+.cardCheckbox input { width: 18px; height: 18px; cursor: pointer; }
+
+.cardContent { display: grid; gap: 0.75rem; margin-bottom: 1rem; }
+.cardField { display: flex; flex-direction: column; gap: 0.25rem; }
+.cardFieldLabel { font-size: 0.75rem; font-weight: 600; color: #64748b; text-transform: uppercase; }
+.cardFieldValue { font-size: 0.9rem; color: #1e293b; }
+
+.cardFieldImportant { background-color: #fef9c3; padding: 0.5rem; border-radius: 6px; border-left: 3px solid #f59e0b; }
+.cardFieldCritical { background-color: #fee2e2; padding: 0.5rem; border-radius: 6px; border-left: 3px solid #ef4444; }
+
+.cardActions { display: flex; justify-content: flex-end; padding-top: 0.75rem; border-top: 1px solid #e2e8f0; }
+
+/* --- ESTILOS COMPARTILHADOS (TABELA E CARDS) --- */
+.saldoCell { font-weight: 700; text-align: center; }
+.limiteCell { display: flex; align-items: center; gap: 0.75rem; }
+
+.riskIndicator { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+.riskIndicator.low { background-color: #10b981; }
+.riskIndicator.medium { background-color: #f59e0b; }
+.riskIndicator.high { background-color: #ef4444; animation: pulse 2s infinite; }
+.riskIndicator.expired { background-color: #374151; }
+
+.statusBadge { padding: 0.4rem 1rem; border-radius: 25px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; }
+.statusAtivo { background-color: #d1fae5; color: #065f46; }
+.statusInativo { background-color: #f3f4f6; color: #374151; }
+
+@keyframes pulse {
+    50% { opacity: 0.6; }
+}
+
+/* --- ESTILOS DE CARREGAMENTO E DADOS VAZIOS --- */
 .loading, .noData {
-    padding: 3rem;
+    padding: 4rem 2rem;
     text-align: center;
-    color: var(--cor-cinza-medio);
+    color: #64748b;
     font-style: italic;
-    background-color: var(--cor-branco);
-    border-radius: var(--raio-borda);
+    background-color: #f8fafc;
+    border: 2px dashed #cbd5e1;
+    font-size: 1.1rem;
+    margin: 1rem 0;
+    border-radius: 12px;
+}
+
+/* --- LÓGICA DE VISIBILIDADE RESPONSIVA --- */
+/* Em telas pequenas (<= 768px), esconde a tabela e mostra os cards */
+@media (max-width: 768px) {
+    .tableContainer {
+        display: none;
+    }
+    .cardContainer {
+        display: block;
+    }
 }

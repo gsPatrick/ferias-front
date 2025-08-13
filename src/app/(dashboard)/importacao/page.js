@@ -2,28 +2,40 @@
 
 import { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
-import api from '@/services/api';
+import { apiClient } from '@/services/api';
 import styles from './page.module.css';
 import Button from '@/components/Button/Button';
-import { UploadCloud, FileText, CheckCircle, AlertTriangle } from 'lucide-react';
+import { 
+    UploadCloud, 
+    FileText, 
+    CheckCircle, 
+    AlertTriangle, 
+    Users, 
+    FileSpreadsheet,
+    ArrowRight,
+    Download,
+    Info
+} from 'lucide-react';
 
 export default function ImportacaoPage() {
     const [file, setFile] = useState(null);
-    const [status, setStatus] = useState('idle'); // idle, uploading, success, error
+    const [status, setStatus] = useState('idle');
     const [message, setMessage] = useState('');
+    const [uploadProgress, setUploadProgress] = useState(0);
 
     const onDrop = useCallback(acceptedFiles => {
-        // Pega apenas o primeiro arquivo
         if (acceptedFiles.length > 0) {
             setFile(acceptedFiles[0]);
             setStatus('ready');
+            setMessage('');
+            setUploadProgress(0);
         }
     }, []);
 
     const { getRootProps, getInputProps, isDragActive } = useDropzone({
         onDrop,
         accept: {
-            'text/csv': ['.csv'],
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
         },
         maxFiles: 1,
     });
@@ -33,83 +45,194 @@ export default function ImportacaoPage() {
 
         setStatus('uploading');
         setMessage('');
+        setUploadProgress(0);
+
+        // Simulação de progresso
+        const progressInterval = setInterval(() => {
+            setUploadProgress(prev => {
+                if (prev >= 90) {
+                    clearInterval(progressInterval);
+                    return 90;
+                }
+                return prev + 10;
+            });
+        }, 200);
 
         const formData = new FormData();
         formData.append('file', file);
 
         try {
-            // Precisamos chamar o axios diretamente aqui para enviar FormData
-            const token = localStorage.getItem('authToken');
-            const response = await api.post('/funcionarios/import', formData, {
+            const response = await apiClient.post('/funcionarios/import', formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
-                    'Authorization': `Bearer ${token}`
                 }
             });
             
-            setStatus('success');
-            setMessage(response.data.message || 'Arquivo importado com sucesso!');
-            setFile(null); // Limpa o arquivo após o sucesso
+            clearInterval(progressInterval);
+            setUploadProgress(100);
+            
+            setTimeout(() => {
+                setStatus('success');
+                setMessage(response.data.message || 'Arquivo importado com sucesso!');
+                setFile(null);
+                setUploadProgress(0);
+            }, 500);
         } catch (error) {
+            clearInterval(progressInterval);
             setStatus('error');
             setMessage(error.response?.data?.message || 'Ocorreu um erro ao importar o arquivo.');
+            setUploadProgress(0);
             console.error("Falha na importação:", error);
         }
+    };
+
+    const resetUpload = () => {
+        setFile(null);
+        setStatus('idle');
+        setMessage('');
+        setUploadProgress(0);
     };
     
     const renderStatus = () => {
         if(status === 'success') {
-            return <div className={`${styles.statusMessage} ${styles.success}`}><CheckCircle /> {message}</div>;
+            return (
+                <div className={`${styles.statusMessage} ${styles.success} ${styles.fadeIn}`}>
+                    <div className={styles.statusIcon}>
+                        <CheckCircle />
+                    </div>
+                    <div className={styles.statusContent}>
+                        <h3>Sucesso!</h3>
+                        <p>{message}</p>
+                    </div>
+                </div>
+            );
         }
         if(status === 'error') {
-            return <div className={`${styles.statusMessage} ${styles.error}`}><AlertTriangle /> {message}</div>;
+            return (
+                <div className={`${styles.statusMessage} ${styles.error} ${styles.fadeIn}`}>
+                    <div className={styles.statusIcon}>
+                        <AlertTriangle />
+                    </div>
+                    <div className={styles.statusContent}>
+                        <h3>Erro na importação</h3>
+                        <p>{message}</p>
+                    </div>
+                </div>
+            );
+        }
+        if(status === 'uploading') {
+            return (
+                <div className={`${styles.statusMessage} ${styles.uploading} ${styles.fadeIn}`}>
+                    <div className={styles.statusIcon}>
+                        <div className={styles.spinner}></div>
+                    </div>
+                    <div className={styles.statusContent}>
+                        <h3>Processando arquivo...</h3>
+                        <div className={styles.progressBar}>
+                            <div 
+                                className={styles.progressFill} 
+                                style={{ width: `${uploadProgress}%` }}
+                            ></div>
+                        </div>
+                        <p>{uploadProgress}% concluído</p>
+                    </div>
+                </div>
+            );
         }
         return null;
     };
 
     return (
         <div className={styles.container}>
-            <div className={styles.header}>
-                <h1>Importar Planilha de Funcionários</h1>
-                <p>Faça o upload do arquivo CSV com os dados cadastrais. O sistema irá criar novos registros e atualizar os existentes com base na matrícula.</p>
-            </div>
+            {/* Hero Section */}
+          
 
-            <div className={styles.uploadCard}>
-                <div {...getRootProps({ className: `${styles.dropzone} ${isDragActive ? styles.active : ''}` })}>
-                    <input {...getInputProps()} />
-                    <UploadCloud size={64} className={styles.uploadIcon} />
-                    {isDragActive ? (
-                        <p>Solte o arquivo aqui...</p>
+            {/* Upload Card */}
+            <div className={styles.uploadSection}>
+                <div className={styles.uploadCard}>
+                    {!file ? (
+                        <div 
+                            {...getRootProps({ 
+                                className: `${styles.dropzone} ${isDragActive ? styles.active : ''} ${styles.slideIn}` 
+                            })}
+                        >
+                            <input {...getInputProps()} />
+                            <div className={styles.dropzoneContent}>
+                                <div className={styles.uploadIconContainer}>
+                                    <UploadCloud size={64} className={styles.uploadIcon} />
+                                    <div className={styles.iconPulse}></div>
+                                </div>
+                                <div className={styles.dropzoneText}>
+                                    {isDragActive ? (
+                                        <h3>Solte o arquivo aqui...</h3>
+                                    ) : (
+                                        <>
+                                            <h3>Arraste sua planilha aqui</h3>
+                                            <p>ou <strong>clique para selecionar</strong></p>
+                                        </>
+                                    )}
+                                </div>
+                                <div className={styles.fileTypes}>
+                                    <FileSpreadsheet size={16} />
+                                    <span>Apenas arquivos .xlsx</span>
+                                </div>
+                            </div>
+                        </div>
                     ) : (
-                        <p>Arraste e solte o arquivo CSV aqui, ou <strong>clique para selecionar</strong></p>
+                        <div className={`${styles.filePreview} ${styles.slideIn}`}>
+                            <div className={styles.fileIcon}>
+                                <FileText size={32} />
+                            </div>
+                            <div className={styles.fileInfo}>
+                                <h4>{file.name}</h4>
+                                <p>{(file.size / 1024).toFixed(2)} KB</p>
+                            </div>
+                            <button 
+                                className={styles.removeFile} 
+                                onClick={resetUpload}
+                                disabled={status === 'uploading'}
+                            >
+                                ×
+                            </button>
+                        </div>
                     )}
-                    <span className={styles.fileHint}>Apenas arquivos .csv são permitidos.</span>
-                </div>
+                    
+                    {renderStatus()}
 
-                {file && (
-                    <div className={styles.filePreview}>
-                        <FileText />
-                        <span>{file.name}</span>
-                        <span>({(file.size / 1024).toFixed(2)} KB)</span>
-                    </div>
-                )}
-                
-                {renderStatus()}
+                    {file && status !== 'success' && (
+                        <div className={styles.actions}>
+                            <Button 
+                                onClick={handleUpload} 
+                                disabled={!file || status === 'uploading'}
+                                className={styles.uploadButton}
+                            >
+                                {status === 'uploading' ? (
+                                    <>
+                                        <div className={styles.buttonSpinner}></div>
+                                        Processando...
+                                    </>
+                                ) : (
+                                    <>
+                                        Iniciar Importação
+                                        <ArrowRight size={16} />
+                                    </>
+                                )}
+                            </Button>
+                        </div>
+                    )}
 
-                <div className={styles.actions}>
-                    <Button onClick={handleUpload} disabled={!file || status === 'uploading'}>
-                        {status === 'uploading' ? 'Importando...' : 'Iniciar Importação'}
-                    </Button>
+                    {status === 'success' && (
+                        <div className={styles.actions}>
+                            <Button onClick={resetUpload} className={styles.newUploadButton}>
+                                Nova Importação
+                            </Button>
+                        </div>
+                    )}
                 </div>
             </div>
 
-            <div className={styles.instructions}>
-                <h2>Instruções e Padrão de Colunas</h2>
-                <p>Para garantir uma importação correta, sua planilha CSV deve conter as seguintes colunas, na ordem correta:</p>
-                <code className={styles.columnList}>
-                    Matrícula, Nome Funcionário, Dth. Admissão, Categoria_Trabalhador, Municipio_Local_Trabalho, DiasAfastado, Dth. Última Férias, Dth. Limite Férias, ... (e as outras colunas)
-                </code>
-            </div>
+            {/* Instructions */}
+     
         </div>
     );
 }

@@ -1,38 +1,23 @@
 // src/app/layout.js
 
-import { Inter, Poppins, Roboto_Mono } from 'next/font/google';
-import './(dashboard)/globals.css'; // Note que aqui é './globals.css', não '../styles/globals.css'
+// Importe suas fontes e o CSS global aqui
+import '../app/(dashboard)/globals.css';
+// Se você estiver usando next/font para Poppins, Inter, etc., elas devem ser importadas aqui.
+// Exemplo: import { Inter, Poppins } from 'next/font/google';
 
-// Configuração das fontes com pesos e subsets
-const inter = Inter({ 
-  subsets: ['latin'],
-  variable: '--font-inter-local',
-  display: 'swap',
-});
-
-const poppins = Poppins({
-  subsets: ['latin'],
-  weight: ['400', '600', '700'],
-  variable: '--font-poppins-local',
-  display: 'swap',
-});
-
-const roboto_mono = Roboto_Mono({
-  subsets: ['latin'],
-  variable: '--font-roboto-mono-local',
-  display: 'swap',
-});
+// const inter = Inter({ subsets: ['latin'], variable: '--font-inter-local' });
+// const poppins = Poppins({ subsets: ['latin'], weight: ['400', '500', '600', '700'], variable: '--font-poppins-local' });
 
 export const metadata = {
   title: 'Sistema de Gestão de Férias',
-  description: 'Plataforma para distribuição e gestão automatizada de férias.',
+  description: 'Gerencie as férias dos seus colaboradores de forma eficiente.',
 };
 
-// AQUI ESTÁ A CORREÇÃO PRINCIPAL: AS TAGS HTML E BODY
 export default function RootLayout({ children }) {
   return (
-    <html lang="pt-BR" className={`${inter.variable} ${poppins.variable} ${roboto_mono.variable}`}>
-      <body>
+    <html lang="pt-BR">
+      {/* A classe aqui aplicaria as fontes importadas */}
+      <body /*className={`${inter.variable} ${poppins.variable}`}*/>
         {children}
       </body>
     </html>

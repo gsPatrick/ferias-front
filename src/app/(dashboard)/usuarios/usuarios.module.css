@@ -1,0 +1,69 @@
+/* src/app/(dashboard)/usuarios/usuarios.module.css */
+
+.container {
+    padding: 2rem;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.header h1 {
+    font-size: 2rem;
+    font-weight: 700;
+}
+
+.tableWrapper {
+    background-color: var(--cor-fundo-card);
+    border-radius: 12px;
+    padding: 1rem;
+    border: 1px solid var(--cor-borda);
+}
+
+.roleBadge {
+    background-color: var(--cor-primaria-transparente);
+    color: var(--cor-primaria);
+    padding: 0.25rem 0.75rem;
+    border-radius: 1rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: capitalize;
+}
+
+/* Estilos para o formulário no Modal */
+.formGroup {
+    margin-bottom: 1.5rem;
+}
+
+.formGroup label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: var(--cor-texto-secundario);
+}
+
+.formGroup input {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    border: 1px solid var(--cor-borda);
+    background-color: var(--cor-fundo-secundario);
+    color: var(--cor-texto-principal);
+    font-size: 1rem;
+}
+
+.formGroup input:focus {
+    outline: none;
+    border-color: var(--cor-primaria);
+    box-shadow: 0 0 0 3px rgba(var(--cor-primaria-rgb), 0.2);
+}
+
+.modalActions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    margin-top: 2rem;
+}

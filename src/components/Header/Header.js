@@ -1,39 +1,59 @@
 // src/components/Header/Header.js
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react'; // NOVO: Adicionado useEffect
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation'; // NOVO: Adicionado useRouter
 import styles from './Header.module.css';
 import Image from 'next/image';
 import { Menu, X, LogOut, User } from 'lucide-react';
 
 const navItems = [
+        { href: '/dashboard', label: 'Dashboard' },
     { href: '/funcionarios', label: 'Funcionários' },
     { href: '/importacao', label: 'Importar Planilha' },
-    { href: '/dashboard', label: 'Dashboard' },
+        { href: '/planejamento', label: 'Planejamento' },
+
 ];
 
-const mockUser = {
-    name: 'Admin RH',
-    email: 'admin@empresa.com'
-}
+// REMOVIDO: O mockUser não é mais necessário
+// const mockUser = {
+//     name: 'Admin RH',
+//     email: 'admin@empresa.com'
+// }
 
 export default function Header() {
     const pathname = usePathname();
+    const router = useRouter(); // NOVO: Hook para navegação
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const [currentUser, setCurrentUser] = useState(null); // NOVO: Estado para o usuário logado
+
+    // NOVO: Efeito para carregar os dados do usuário do localStorage
+    useEffect(() => {
+        const userData = localStorage.getItem('user');
+        if (userData) {
+            setCurrentUser(JSON.parse(userData));
+        }
+    }, []);
+
 
     const toggleMenu = () => {
         setIsMenuOpen(!isMenuOpen);
+    };
+
+    // NOVO: Função para realizar o logout
+    const handleLogout = () => {
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('user');
+        router.push('/login');
     };
 
     return (
         <header className={styles.header}>
             <div className={styles.headerLeft}>
                 <Link href="/dashboard" className={styles.logoContainer}>
-                    {/* Substitua "logo.png" pelo caminho correto se não estiver na raiz de public */}
                     <Image src="/logo.png" alt="Logo da Empresa" width={70} height={50} className={styles.logo} />
-                    </Link>
+                </Link>
             </div>
 
             <nav className={`${styles.nav} ${isMenuOpen ? styles.navOpen : ''}`}>
@@ -57,13 +77,14 @@ export default function Header() {
             <div className={styles.headerRight}>
                 <div className={styles.userInfo}>
                     <User size={20} className={styles.userIcon} />
-                    <span className={styles.userName}>{mockUser.name}</span>
+                    {/* ALTERADO: Exibe o nome do usuário do estado, com um fallback */}
+                    <span className={styles.userName}>{currentUser ? currentUser.name : 'Usuário'}</span>
                 </div>
-                <button className={styles.logoutButton}>
+                {/* ALTERADO: Adicionado onClick ao botão de logout */}
+                <button className={styles.logoutButton} onClick={handleLogout} title="Sair">
                     <LogOut size={20} />
                 </button>
                 
-                {/* Botão do menu hamburguer para mobile */}
                 <button className={styles.menuToggle} onClick={toggleMenu}>
                     <Menu size={24} />
                 </button>

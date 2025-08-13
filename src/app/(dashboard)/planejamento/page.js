@@ -1,117 +1,114 @@
+// src/app/(dashboard)/planejamento/page.js
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import api from '@/services/api';
-import Table from '@/components/Table/Table';
-import Button from '@/components/Button/Button';
-import Modal from '@/components/Modal/Modal';
-import Card from '@/components/Card/Card';
-import GanttChart from '@/components/GanttChart/GanttChart';
-import FilterPanel from '@/components/FilterPanel/FilterPanel';
-import ActionMenu from '@/components/ActionMenu/ActionMenu';
-import { generateAvisoFeriasXLSX } from '@/utils/xlsxGenerator';
-import styles from './planejamento.module.css';
-import { CalendarPlus, Download, Filter, Search, Edit, Eye, List, GanttChartSquare, FileSpreadsheet, TrendingUp, CalendarCheck } from 'lucide-react';
+import styles from './planejamento.module.css'; // Criaremos este CSS
+import { Calendar, Briefcase, ChevronLeft, ChevronRight, User } from 'lucide-react';
+import Link from 'next/link';
 
-const StatusBadge = ({ status }) => {
-    const statusClass = styles[`status${status}`] || styles.statusDefault;
-    return <span className={`${styles.statusBadge} ${statusClass}`}>{status}</span>;
-}
+const formatDateForDisplay = (dateString) => {
+    if (!dateString) return 'N/A';
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return 'Data Inválida';
+    return date.toLocaleDateString('pt-BR', { timeZone: 'UTC' });
+};
 
 export default function PlanejamentoPage() {
-    const [planejamento, setPlanejamento] = useState([]);
+    const [eventos, setEventos] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [viewMode, setViewMode] = useState('table');
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [isFilterOpen, setIsFilterOpen] = useState(false);
+    const [dataReferencia, setDataReferencia] = useState(new Date());
 
-    const fetchPlanejamento = async () => {
-        setIsLoading(true);
-        try {
-            const response = await api.planejamento.getAtivo();
-            setPlanejamento(response.data);
-        } catch (error) {
-            console.error("Falha ao buscar planejamento ativo:", error);
-        } finally {
-            setIsLoading(false);
-        }
-    };
+    const ano = dataReferencia.getFullYear();
+    const mes = dataReferencia.getMonth() + 1; // getMonth é 0-indexado
 
     useEffect(() => {
-        fetchPlanejamento();
-    }, []);
+        const fetchVisaoGeral = async () => {
+            setIsLoading(true);
+            try {
+                const response = await api.planejamento.getVisaoGeral(ano, mes);
+                setEventos(response.data);
+            } catch (error) {
+                console.error("Falha ao buscar visão geral do planejamento:", error);
+                alert("Erro ao buscar dados do planejamento.");
+            } finally {
+                setIsLoading(false);
+            }
+        };
 
-    const handleGenerate = async (event) => {
-        event.preventDefault();
-        const formData = new FormData(event.target);
-        const ano = formData.get('ano');
-        const descricao = formData.get('descricao');
+        fetchVisaoGeral();
+    }, [ano, mes]);
 
-        try {
-            const resultado = await api.planejamento.gerarDistribuicao(ano, descricao);
-            alert(resultado.data.message);
-            setIsModalOpen(false);
-            fetchPlanejamento(); // Recarrega a lista para mostrar o novo planejamento
-        } catch (error) {
-            console.error("Falha ao gerar distribuição:", error);
-            alert(error.response?.data?.message || "Erro ao gerar distribuição.");
-        }
+    const handleMesAnterior = () => {
+        setDataReferencia(prev => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));
     };
 
-    const getActionItems = (row) => [
-        { label: 'Ver Funcionário', icon: <Eye size={16}/>, onClick: () => window.location.href = `/funcionarios/${row.Funcionario.matricula}` },
-        { label: 'Editar Férias', icon: <Edit size={16}/>, onClick: () => {} },
-        { label: 'Gerar Aviso (XLSX)', icon: <FileSpreadsheet size={16}/>, onClick: () => generateAvisoFeriasXLSX(
-            { nome: row.Funcionario.nome_funcionario, periodo_aquisitivo: `${new Date(row.periodo_aquisitivo_inicio).toLocaleDateString()} - ${new Date(row.periodo_aquisitivo_fim).toLocaleDateString()}` }, 
-            { inicio: row.data_inicio, fim: row.data_fim, dias: row.qtd_dias }
-        )},
-    ];
+    const handleMesSeguinte = () => {
+        setDataReferencia(prev => new Date(prev.getFullYear(), prev.getMonth() + 1, 1));
+    };
+    
+    // Agrupa os eventos por dia para facilitar a renderização
+    const eventosAgrupadosPorDia = useMemo(() => {
+        const grouped = {};
+        eventos.forEach(evento => {
+            const dia = new Date(evento.data_inicio).getUTCDate();
+            if (!grouped[dia]) {
+                grouped[dia] = [];
+            }
+            grouped[dia].push(evento);
+        });
+        return grouped;
+    }, [eventos]);
 
-    const columns = [
-        { header: 'Funcionário', accessor: 'nome', cell: (row) => row.Funcionario?.nome_funcionario },
-        { header: 'Início Férias', accessor: 'data_inicio' },
-        { header: 'Fim Férias', accessor: 'data_fim' },
-        { header: 'Status', accessor: 'status', cell: (row) => <StatusBadge status={row.status} /> },
-        { header: 'Ações', accessor: 'acoes', cell: (row) => <ActionMenu items={getActionItems(row)} /> },
-    ];
+    const nomeMesAtual = dataReferencia.toLocaleString('pt-BR', { month: 'long', year: 'numeric' });
 
     return (
-        <>
-            <div className={styles.container}>
-                <div className={styles.summaryCards}>
-                    <Card icon={<CalendarCheck size={28}/>} title="Total de Férias Planejadas" value={isLoading ? '...' : planejamento.length} />
-                    <Card icon={<GanttChartSquare size={28}/>} title="Total de Dias Alocados" value={isLoading ? '...' : planejamento.reduce((acc, curr) => acc + curr.qtd_dias, 0)} />
-                    <Card icon={<TrendingUp size={28}/>} title="Mês com Maior Concentração" value="Julho" color="var(--cor-feedback-alerta)" />
+        <div className={styles.container}>
+            <div className={styles.header}>
+                <h1>Visão Geral do Planejamento</h1>
+                <div className={styles.dateSelector}>
+                    <button onClick={handleMesAnterior} className={styles.navButton}><ChevronLeft /></button>
+                    <span className={styles.currentMonth}>{nomeMesAtual}</span>
+                    <button onClick={handleMesSeguinte} className={styles.navButton}><ChevronRight /></button>
                 </div>
-
-                <div className={styles.controlsHeader}>
-                    <div className={styles.searchContainer}><Search size={20} className={styles.searchIcon} /><input type="text" placeholder="Buscar..." className={styles.searchInput} /></div>
-                    <div className={styles.actions}>
-                        <div className={styles.viewToggle}>
-                            <button onClick={() => setViewMode('table')} className={viewMode === 'table' ? styles.activeView : ''} title="Visão de Tabela"><List size={18}/></button>
-                            <button onClick={() => setViewMode('calendar')} className={viewMode === 'calendar' ? styles.activeView : ''} title="Visão de Calendário"><GanttChartSquare size={18}/></button>
-                        </div>
-                        <Button variant="secondary" icon={<Filter size={16} />} onClick={() => setIsFilterOpen(true)}>Filtros</Button>
-                        <Button icon={<CalendarPlus size={16} />} onClick={() => setIsModalOpen(true)}>Gerar Distribuição</Button>
-                    </div>
-                </div>
-                
-                {viewMode === 'table' ? (
-                    <Table columns={columns} data={planejamento} isLoading={isLoading} />
-                ) : (
-                    <GanttChart data={planejamento.map(p => ({ nome: p.Funcionario.nome_funcionario, inicio: p.data_inicio, fim: p.data_fim }))} />
-                )}
             </div>
 
-            <FilterPanel isOpen={isFilterOpen} onClose={() => setIsFilterOpen(false)} />
-            <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Gerar Nova Distribuição de Férias">
-                <form className={styles.modalBody} onSubmit={handleGenerate}>
-                    <p>Você irá arquivar o planejamento atual e criar um novo. Este processo pode levar alguns minutos.</p>
-                    <div className={styles.formGroup}><label htmlFor="ano">Ano</label><input name="ano" type="number" defaultValue={new Date().getFullYear()} className={styles.modalInput} required /></div>
-                    <div className={styles.formGroup}><label htmlFor="descricao">Descrição</label><input name="descricao" type="text" placeholder="Ex: Planejamento inicial" className={styles.modalInput} /></div>
-                    <div className={styles.modalActions}><Button type="button" variant="secondary" onClick={() => setIsModalOpen(false)}>Cancelar</Button><Button type="submit">Confirmar e Gerar</Button></div>
-                </form>
-            </Modal>
-        </>
+            <div className={styles.timelineContainer}>
+                {isLoading ? (
+                    <p>Carregando eventos...</p>
+                ) : Object.keys(eventosAgrupadosPorDia).length === 0 ? (
+                    <p className={styles.noEvents}>Nenhuma férias ou afastamento encontrado para este mês.</p>
+                ) : (
+                    Object.entries(eventosAgrupadosPorDia).map(([dia, eventosDoDia]) => (
+                        <div key={dia} className={styles.dayGroup}>
+                            <div className={styles.dayMarker}>
+                                <div className={styles.dayNumber}>{dia}</div>
+                            </div>
+                            <div className={styles.eventsList}>
+                                {eventosDoDia.map(evento => (
+                                    <div key={evento.id} className={`${styles.eventCard} ${styles[evento.tipo.toLowerCase()]}`}>
+                                        <div className={styles.eventIcon}>
+                                            {evento.tipo === 'Férias' ? <Calendar size={20} /> : <Briefcase size={20} />}
+                                        </div>
+                                        <div className={styles.eventDetails}>
+                                            <div className={styles.eventHeader}>
+                                                <span className={styles.eventType}>{evento.tipo}</span>
+                                                <span className={styles.eventStatus}>{evento.status}</span>
+                                            </div>
+                                            <Link href={`/funcionarios/${evento.matricula}`} className={styles.employeeName}>
+                                                <User size={14} /> {evento.funcionario}
+                                            </Link>
+                                            <p className={styles.eventDates}>
+                                                {formatDateForDisplay(evento.data_inicio)} até {formatDateForDisplay(evento.data_fim)}
+                                            </p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    ))
+                )}
+            </div>
+        </div>
     );
 }

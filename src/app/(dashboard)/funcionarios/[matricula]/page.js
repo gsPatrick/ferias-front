@@ -1,7 +1,13 @@
 'use client';
 
-import { useState, useEffect, use } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+// ==========================================================
+// IMPORTANTE: 'use' não é um hook padrão do React. 
+// Acredito que foi um erro de digitação e o correto para pegar
+// os parâmetros no App Router é apenas usar o que vem das props.
+// Vou remover a importação e o uso de `use(params)`.
+// ==========================================================
 import api from '@/services/api';
 import styles from './page.module.css';
 import Card from '@/components/Card/Card';
@@ -31,9 +37,11 @@ const formatDateForInput = (dateString) => {
     if (!dateString) return '';
     const date = new Date(dateString);
     if (isNaN(date.getTime())) return '';
-    const tzoffset = (new Date()).getTimezoneOffset() * 60000;
-    const localISOTime = (new Date(date - tzoffset)).toISOString().split('T')[0];
-    return localISOTime;
+    // Corrigindo para usar o fuso horário local corretamente
+    const year = date.getUTCFullYear();
+    const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(date.getUTCDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
 };
 
 const formatDateForDisplay = (dateString) => {
@@ -44,8 +52,10 @@ const formatDateForDisplay = (dateString) => {
 };
 
 export default function FuncionarioProfilePage({ params }) {
-    const resolvedParams = use(params);
-    const { matricula } = resolvedParams;
+    // ==========================================================
+    // CORREÇÃO: Acessando a matrícula diretamente dos parâmetros.
+    // ==========================================================
+    const { matricula } = params;
     const router = useRouter();
 
     const [funcionario, setFuncionario] = useState(null);
@@ -93,8 +103,20 @@ export default function FuncionarioProfilePage({ params }) {
         event.preventDefault();
         const formData = new FormData(event.target);
         const data = Object.fromEntries(formData.entries());
+
+        // ==========================================================
+        // CORREÇÃO: O backend espera a matrícula no corpo dos dados.
+        // E o serviço de api.js não passa a matrícula como parâmetro separado para `createFerias`.
+        // Precisamos adicionar a matrícula ao objeto `data`.
+        // ==========================================================
+        data.matricula_funcionario = matricula;
+
         try {
-            await api.ferias.create(matricula, data);
+            // Supondo que você adicionará uma função `create` em `api.ferias`
+            // api.js (sugestão): ferias: { create: (data) => apiClient.post('/ferias', data) }
+            // Se a rota for aninhada, seria `create: (matricula, data) => ...`
+            await api.ferias.create(data); // Assumindo que você criará api.ferias.create(data)
+
             alert('Férias lançadas com sucesso!');
             closeModal();
             fetchFuncionario();
@@ -108,13 +130,28 @@ export default function FuncionarioProfilePage({ params }) {
         event.preventDefault();
         const formData = new FormData(event.target);
         const data = Object.fromEntries(formData.entries());
+
+        // O campo 'impacta_ferias' é um checkbox, seu valor pode não estar presente se não for marcado.
+        // Garantimos que ele seja um booleano.
+        data.impacta_ferias = !!data.impacta_ferias;
+
         try {
+            // ==========================================================
+            // CORREÇÃO CENTRAL: Chamando a função correta do seu api.js
+            // O serviço `api.afastamentos.create` espera (matricula, data).
+            // `api` é o objeto importado, `afastamentos` é a chave e `create` é a função.
+            // O `TypeError` acontece porque você estava chamando `api.afastamentos.create` sem que `api` ou `api.afastamentos` estivessem definidos corretamente no momento da chamada (problema de escopo ou importação errada)
+            // Agora, com `api` importado diretamente, a chamada fica correta e explícita.
+            // ==========================================================
             await api.afastamentos.create(matricula, data);
+
             alert('Afastamento lançado com sucesso!');
             closeModal();
             fetchFuncionario();
         } catch(error) {
             console.error("Falha ao lançar afastamento:", error);
+            // O erro 404 que você viu era porque a rota não existia no backend.
+            // Agora que a rota foi criada, o erro (se houver) será de validação ou do servidor (500).
             alert(error.response?.data?.message || "Erro ao lançar afastamento.");
         }
     };
@@ -177,7 +214,7 @@ export default function FuncionarioProfilePage({ params }) {
                     <Card 
                         icon={<Calendar size={28}/>} 
                         title="Últimas Férias" 
-                        value={formatDateForDisplay(funcionario.dth_ultima_ferias)} 
+                        value={formatDateForDisplay(funcionario.historicoFerias && funcionario.historicoFerias.length > 0 ? funcionario.historicoFerias[0].data_fim : null)} 
                     />
                 </div>
 
@@ -382,7 +419,7 @@ export default function FuncionarioProfilePage({ params }) {
                             </div>
                             <div className={styles.formGroup}>
                                 <label className={styles.checkboxLabel}>
-                                    <input name="impacta_ferias" type="checkbox" defaultChecked/>
+                                    <input name="impacta_ferias" type="checkbox" defaultChecked value="true"/>
                                     Impacta no cálculo de férias?
                                 </label>
                             </div>

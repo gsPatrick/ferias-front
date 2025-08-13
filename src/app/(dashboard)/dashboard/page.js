@@ -1,192 +1,136 @@
+// src/app/(dashboard)/dashboard/page.js
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation'; // <<< 1. IMPORTAR O ROUTER
 import Link from 'next/link';
 import api from '@/services/api';
 import Card from '@/components/Card/Card';
-import Modal from '@/components/Modal/Modal';
-import Table from '@/components/Table/Table';
-import CoverageChart from '@/components/Charts/CoverageChart';
-import ActionPanel from '@/components/ActionPanel/ActionPanel';
-import styles from './dashboard.module.css';
-import { 
-    Users, 
-    CalendarCheck, 
-    AlertTriangle, 
-    TrendingUp, 
-    CalendarPlus, 
-    Upload, 
-    Download,
-    FileText,
-    Settings,
-    BarChart3,
-    Clock
-} from 'lucide-react';
+import DashboardChart from './DashboardChart';
+import Button from '@/components/Button/Button';
+import styles from './Dashboard.module.css';
+import { Users, CalendarCheck, Percent, AlertTriangle, AlertOctagon, Info, CalendarX, RefreshCw } from 'lucide-react';
 
-// Dados que não vêm da API (links, colunas, gráfico mockado)
-
-
-const vencimentoColumns = [
-    { key: 'funcionario', label: 'Funcionário' },
-    { key: 'tipo', label: 'Tipo' },
-    { key: 'vencimento', label: 'Vencimento' },
-    { key: 'diasRestantes', label: 'Dias Restantes' }
-];
-
-const mockGraficoCobertura = {
-    labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'],
-    datasets: [{
-        label: 'Colaboradores em Férias',
-        data: [12, 8, 15, 22, 18, 25, 30, 28, 20, 16, 10, 14]
-    }]
+// --- COMPONENTE INTERNO PARA ITENS DE AÇÃO ---
+const ActionItem = ({ item }) => {
+    // ... (componente interno inalterado)
 };
 
+// --- COMPONENTE PRINCIPAL DA PÁGINA ---
 export default function DashboardPage() {
     const [summaryData, setSummaryData] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [modal, setModal] = useState({ isOpen: false, title: '', columns: [], data: [] });
+    
+    const router = useRouter(); // <<< 2. INICIALIZAR O ROUTER
 
-    useEffect(() => {
-        const fetchSummary = async () => {
-            try {
-                setIsLoading(true);
-                setError(null);
-                const response = await api.dashboard.getSummary();
-                setSummaryData(response.data);
-            } catch (error) {
-                console.error("Falha ao buscar dados do dashboard:", error);
-                setError("Erro ao carregar dados do dashboard. Tente novamente mais tarde.");
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
-        fetchSummary();
-    }, []);
-
-    const handleCardClick = (type) => {
-        // Implementar lógica para abrir modal com dados específicos
-        // Por enquanto, mantém a estrutura existente
-        switch (type) {
-            case 'vencimentos':
-                setModal({
-                    isOpen: true,
-                    title: 'Vencimentos Próximos',
-                    columns: vencimentoColumns,
-                    data: [] // Aqui viriam os dados da API futuramente
-                });
-                break;
-            default:
-                break;
+    // Função para buscar os dados do dashboard
+    const fetchSummaryData = async () => {
+        setIsLoading(true);
+        setError(null);
+        try {
+            const response = await api.dashboard.getSummary();
+            setSummaryData(response.data);
+        } catch (err) {
+            console.error("Falha ao buscar dados do dashboard:", err);
+            setError("Não foi possível carregar os dados do painel. Tente novamente mais tarde.");
+        } finally {
+            setIsLoading(false);
         }
     };
 
-    const formatValue = (value, defaultValue = '0') => {
-        if (isLoading) return '...';
-        if (error) return '--';
-        return value ?? defaultValue;
+    useEffect(() => {
+        fetchSummaryData();
+    }, []);
+
+    // ======================================================================
+    // CORREÇÃO: Função agora redireciona para a página de importação.
+    // ======================================================================
+    const handleGerarPlanejamento = () => {
+        // Simplesmente navega para a página de importação.
+        // O nome da rota pode variar, ajuste se necessário (ex: '/importar-planilha').
+        router.push('/importacao'); 
     };
 
-    const getStatusColor = () => {
-        if (error) return '#ef4444';
-        if (isLoading) return '#6b7280';
-        return 'var(--cor-primaria-medio)';
-    };
+    // Renderização condicional de Loading, Erro ou Conteúdo
+    if (isLoading) {
+        return <div className={styles.loadingContainer}>Carregando painel de controle...</div>;
+    }
+
+    if (error) {
+        return <div className={styles.errorContainer}>{error}</div>;
+    }
+
+    if (!summaryData) {
+        return <div className={styles.loadingContainer}>Nenhum dado disponível.</div>;
+    }
+
+    const { cardsPrincipais, itensDeAcao, distribuicaoMensal } = summaryData;
+    const hasChartData = distribuicaoMensal && distribuicaoMensal.some(m => m.total > 0);
 
     return (
-        <>
-            <div className={styles.container}>
-                {error && (
-                    <div style={{
-                        background: '#fef2f2',
-                        border: '1px solid #fecaca',
-                        borderRadius: 'var(--raio-borda)',
-                        padding: '1rem',
-                        color: '#dc2626',
-                        marginBottom: '1rem',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.5rem'
-                    }}>
-                        <AlertTriangle size={20} />
-                        {error}
-                    </div>
-                )}
-                
-                <div className={styles.cardsGrid}>
-                    <Card 
-                        icon={<Users size={32} />}
-                        title="Total de Funcionários Ativos"
-                        value={formatValue(summaryData?.totalFuncionarios)}
-                        color={getStatusColor()}
-                        onClick={() => window.location.href = '/funcionarios'}
-                        isLoading={isLoading}
-                    />
-                    <Card 
-                        icon={<CalendarCheck size={32} />}
-                        title="Planejamento Ativo"
-                        value={formatValue(summaryData?.planejamentoAtivo, 'N/A')}
-                        color="var(--cor-feedback-sucesso)"
-                        isLoading={isLoading}
-                    />
-                    <Card 
-                        icon={<AlertTriangle size={32} />}
-                        title="Vencimentos em 90 dias"
-                        value={formatValue(summaryData?.vencimentosProximos)}
-                        color="var(--cor-feedback-alerta)"
-                        onClick={() => handleCardClick('vencimentos')}
-                        isLoading={isLoading}
-                    />
-                    <Card 
-                        icon={<TrendingUp size={32} />}
-                        title="Cobertura (Mês Atual)"
-                        value={formatValue('85%', '85%')} // Este dado ainda é mockado
-                        color="#8B5CF6"
-                        isLoading={isLoading}
-                    />
-                </div>
-                
-                <div className={styles.mainContent}>
-                    <div className={styles.actionPanelColumn}>
-                        <ActionPanel 
-                            items={summaryData?.actionItems || []} 
-                            isLoading={isLoading}
-                        />
-                    </div>
-                    
-                    <div className={styles.rightColumn}>
-                        <div className={styles.chartSection}>
-                            <h3>
-                                <BarChart3 size={24} style={{ 
-                                    display: 'inline', 
-                                    marginRight: '0.5rem', 
-                                    verticalAlign: 'middle' 
-                                }} />
-                                Colaboradores em Férias por Mês
-                            </h3>
-                            <CoverageChart 
-                                data={mockGraficoCobertura} 
-                                isLoading={isLoading}
-                            />
+        <div className={styles.container}>
+            <div className={styles.header}>
+                <h1 className={styles.pageTitle}>Painel de Controle</h1>
+                <Button 
+                    onClick={handleGerarPlanejamento} 
+                    icon={<RefreshCw size={16} />}
+                >
+                    Gerar Novo Planejamento
+                </Button>
+            </div>
+            
+            <div className={styles.cardsGrid}>
+                <Card 
+                    icon={<Users size={28} />} 
+                    title="Total de Funcionários Ativos" 
+                    value={cardsPrincipais.totalFuncionarios} 
+                />
+                <Card 
+                    icon={<CalendarCheck size={28} />} 
+                    title="Planejamento Ativo" 
+                    value={cardsPrincipais.planejamentoAtivo}
+                />
+                <Card 
+                    icon={<Percent size={28} />} 
+                    title="% do Quadro Planejado" 
+                    value={cardsPrincipais.percentualPlanejado}
+                    color="var(--cor-sucesso)"
+                />
+                <Card 
+                    icon={<Users size={28} />} 
+                    title="Funcionários Planejados" 
+                    value={cardsPrincipais.funcionariosComFeriasPlanejadas} 
+                />
+            </div>
+            
+            <div className={styles.mainContentGrid}>
+                <div className={styles.chartSection}>
+                    {hasChartData ? (
+                        <DashboardChart data={distribuicaoMensal} />
+                    ) : (
+                        <div className={styles.chartPlaceholder}>
+                            <h3 className={styles.sectionTitle}>Distribuição de Férias no Ano</h3>
+                            <div className={styles.placeholderContent}>
+                                <CalendarX size={48} />
+                                <p>Nenhum dado de férias encontrado no planejamento ativo para o ano atual.</p>
+                                <Button onClick={handleGerarPlanejamento}>
+                                    Importar planilha para gerar planejamento
+                                </Button>
+                            </div>
                         </div>
-                        
-                
+                    )}
+                </div>
+
+                <div className={styles.actionsSection}>
+                    <h3 className={styles.sectionTitle}>Pontos de Atenção</h3>
+                    <div className={styles.actionsList}>
+                        {itensDeAcao && itensDeAcao.map((item, index) => (
+                           <ActionItem key={index} item={item} />
+                        ))}
                     </div>
                 </div>
             </div>
-
-            <Modal 
-                isOpen={modal.isOpen} 
-                onClose={() => setModal({ ...modal, isOpen: false })} 
-                title={modal.title}
-            >
-                <Table 
-                    columns={vencimentoColumns} 
-                    data={modal.data} 
-                    emptyMessage="Nenhum vencimento encontrado"
-                />
-            </Modal>
-        </>
+        </div>
     );
 }

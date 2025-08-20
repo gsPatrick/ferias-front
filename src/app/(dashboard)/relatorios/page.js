@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import api from '@/services/api';
 import Table from '@/components/Table/Table';
 import Button from '@/components/Button/Button';
-import CoverageChart from '@/components/CoverageChart';
+import CoverageChart from '../../../components/Charts/CoverageChart';
 import styles from './relatorios.module.css';
 import { AlertTriangle, Users, Download, DollarSign } from 'lucide-react';
 

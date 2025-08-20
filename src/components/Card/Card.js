@@ -2,10 +2,11 @@
 import styles from './Card.module.css';
 
 export default function Card({ icon, title, value, color, onClick }) {
-    const cardStyle = { '--card-accent-color': color };
-    
     // Adiciona a classe 'clickable' se uma função onClick for fornecida
     const cardClassName = `${styles.card} ${onClick ? styles.clickable : ''}`;
+    
+    // Define a variável de cor CSS para a borda
+    const cardStyle = color ? { '--card-accent-color': color } : {};
 
     return (
         <div className={cardClassName} style={cardStyle} onClick={onClick}>

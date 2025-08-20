@@ -205,3 +205,48 @@
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
 }
+
+/* Adicione estas classes no final de src/app/(dashboard)/dashboard/dashboard.module.css */
+
+.noActions {
+    text-align: center;
+    padding: 2rem;
+    color: var(--cor-cinza-medio);
+}
+
+/* Estilos para o Modal de Funcionários Planejados */
+.modalList {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    max-height: 60vh;
+    overflow-y: auto;
+}
+
+.modalListItem a {
+    display: block;
+    padding: 1rem;
+    border-radius: var(--raio-borda);
+    transition: background-color 0.2s;
+    border-bottom: 1px solid #E5E7EB;
+}
+
+.modalListItem a:hover {
+    background-color: var(--cor-fundo);
+}
+
+.modalListItem:last-child a {
+    border-bottom: none;
+}
+
+.modalListName {
+    font-weight: 500;
+    color: var(--cor-texto-principal);
+    display: block;
+    margin-bottom: 0.25rem;
+}
+
+.modalListMatricula {
+    font-size: 0.8rem;
+    color: var(--cor-cinza-medio);
+}

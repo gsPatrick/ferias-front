@@ -214,125 +214,6 @@
     position: relative;
 }
 
-/* Layout de Cards para Mobile */
-.cardContainer {
-    display: none;
-}
-
-.employeeCard {
-    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-    border-radius: 12px;
-    padding: 1.5rem;
-    margin-bottom: 1rem;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.06);
-    border: 1px solid #e2e8f0;
-    transition: all 0.3s ease;
-    position: relative;
-    overflow: hidden;
-}
-
-.employeeCard:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
-}
-
-.employeeCard::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 4px;
-    height: 100%;
-    background: linear-gradient(to bottom, #3b82f6, #1d4ed8);
-    border-radius: 0 2px 2px 0;
-}
-
-.cardHeader {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 1rem;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-}
-
-.cardTitle {
-    flex: 1;
-    min-width: 0;
-}
-
-.cardName {
-    font-size: 1.1rem;
-    font-weight: 600;
-    color: #1e293b;
-    margin-bottom: 0.25rem;
-    line-height: 1.3;
-}
-
-.cardMatricula {
-    font-size: 0.85rem;
-    color: #64748b;
-    font-weight: 500;
-}
-
-.cardCheckbox {
-    flex-shrink: 0;
-    margin-top: 0.25rem;
-}
-
-.cardCheckbox input {
-    width: 18px;
-    height: 18px;
-    cursor: pointer;
-}
-
-.cardContent {
-    display: grid;
-    gap: 0.75rem;
-    margin-bottom: 1rem;
-}
-
-.cardField {
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-}
-
-.cardFieldLabel {
-    font-size: 0.75rem;
-    font-weight: 600;
-    color: #64748b;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.cardFieldValue {
-    font-size: 0.9rem;
-    color: #1e293b;
-    font-weight: 500;
-}
-
-.cardFieldImportant {
-    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-    padding: 0.5rem;
-    border-radius: 6px;
-    border-left: 3px solid #f59e0b;
-}
-
-.cardFieldCritical {
-    background: linear-gradient(135deg, #fecaca 0%, #fca5a5 100%);
-    padding: 0.5rem;
-    border-radius: 6px;
-    border-left: 3px solid #ef4444;
-}
-
-.cardActions {
-    display: flex;
-    justify-content: flex-end;
-    padding-top: 0.75rem;
-    border-top: 1px solid #e2e8f0;
-}
-
 .nomeLink {
     color: #3b82f6;
     font-weight: 600;
@@ -421,7 +302,6 @@
     border: 1px solid #9ca3af;
 }
 
-/* Loading State */
 .loading, .noData {
     padding: 4rem 2rem;
     text-align: center;
@@ -442,7 +322,6 @@
     color: #64748b;
 }
 
-/* Modal Styles */
 .modalContent {
     display: flex;
     flex-direction: column;
@@ -450,7 +329,7 @@
 }
 
 .modalContent p strong {
-    color: #3b82f6;
+    color: var(--cor-primaria-profundo);
 }
 
 .modalActions {
@@ -461,10 +340,14 @@
     flex-wrap: wrap;
 }
 
+/* ========================================================== */
+/* ESTILOS DO FORMULÁRIO DO MODAL CORRIGIDOS E MELHORADOS */
+/* ========================================================== */
 .formGrid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 1.5rem;
+    /* ALTERADO: Força duas colunas em telas maiores */
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.25rem 1.5rem; /* Espaçamento vertical e horizontal */
 }
 
 .formGroup {
@@ -474,188 +357,46 @@
 }
 
 .formGroup label {
-    font-weight: 600;
+    font-weight: 500;
     font-size: 0.875rem;
-    color: #374151;
-}
-
-.formGroup input[required] ~ label::after,
-.formGroup label[required]::after {
-    content: ' *';
-    color: #ef4444;
+    color: #374151; /* --cor-texto-principal mais suave */
 }
 
 .formGroup input,
 .formGroup select {
     width: 100%;
-    padding: 0.875rem 1rem;
-    border: 2px solid #e5e7eb;
-    border-radius: 8px;
-    font-size: 0.95rem;
-    background-color: #ffffff;
-    transition: all 0.2s ease;
-    font-weight: 500;
+    padding: 0.75rem 1rem;
+    border: 1px solid #D1D5DB; /* Borda sutil */
+    border-radius: var(--raio-borda);
+    background-color: var(--cor-fundo); /* Fundo um pouco diferente para contraste */
+    font-size: 0.9rem;
+    transition: all 0.2s ease-in-out;
 }
 
 .formGroup input:focus,
 .formGroup select:focus {
     outline: none;
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-    transform: translateY(-1px);
+    border-color: var(--cor-primaria-medio);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
 }
 
-.formGroup input::placeholder {
-    color: #9ca3af;
-    opacity: 0.8;
-}
-
-/* Responsive Design */
-@media (max-width: 1024px) {
-    .container {
-        padding: 0.75rem;
-        gap: 1rem;
-    }
-    
-    .header {
-        padding: 1.25rem;
-    }
-    
-    .searchContainer {
-        min-width: 250px;
-        max-width: 400px;
-    }
-}
-
+/* ========================================================== */
+/* RESPONSIVIDADE DO FORMULÁRIO E DO MODAL */
+/* ========================================================== */
 @media (max-width: 768px) {
-    .container {
-        padding: 0.5rem;
-        gap: 0.75rem;
-    }
+    /* ... (outras regras responsivas que você já tem) ... */
 
-    .header, .activeFiltersAndClear, .bulkActionsPanel, .tableSummaryAndExport {
-        padding: 1rem;
-        margin: 0 -0.5rem;
-        border-radius: 8px;
-        border-left: none;
-        border-right: none;
-    }
-
-    .header {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 1rem;
-    }
-    
-    .searchContainer {
-        max-width: 100%;
-        min-width: unset;
-    }
-
-    .actions {
-        width: 100%;
-        justify-content: center;
-        gap: 0.75rem;
-    }
-    
-    .actions > * {
-        flex: 1;
-        max-width: 200px;
-    }
-
-    .clearAllFiltersButton {
-        align-self: stretch;
-    }
-
-    .bulkActionsPanel {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 1rem;
-        text-align: center;
-    }
-    
-    .tableSummaryAndExport {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 1rem;
-        text-align: center;
-    }
-    
-    .tableWrapper {
-        margin: 0 -0.5rem;
-        border-radius: 8px;
-        border-left: none;
-        border-right: none;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-    }
-
-    /* Mostrar cards no mobile */
-    .cardContainer {
-        display: block;
-        padding: 1rem;
-    }
-
+    /* ALTERADO: Faz o formulário ter apenas uma coluna em telas menores */
     .formGrid {
         grid-template-columns: 1fr;
     }
 
     .modalActions {
-        flex-direction: column;
+        flex-direction: column-reverse; /* Botão principal fica por último (embaixo) */
         align-items: stretch;
     }
     
     .modalActions > * {
         width: 100%;
-    }
-
-    .filterPill {
-        font-size: 0.8rem;
-        padding: 0.4rem 0.8rem;
-    }
-
-    .activeFiltersContainer {
-        justify-content: center;
-    }
-}
-
-@media (max-width: 480px) {
-    .container {
-        padding: 0.25rem;
-    }
-    
-    .header, .activeFiltersAndClear, .bulkActionsPanel, .tableSummaryAndExport, .tableWrapper {
-        margin: 0 -0.25rem;
-        border-radius: 6px;
-    }
-
-    .searchInput {
-        font-size: 0.9rem;
-        padding: 0.875rem 0.875rem 0.875rem 2.75rem;
-    }
-
-    .employeeCard {
-        padding: 1rem;
-        margin-bottom: 0.75rem;
-    }
-
-    .cardName {
-        font-size: 1rem;
-    }
-
-    .cardContent {
-        gap: 0.5rem;
-    }
-}
-
-/* Hover effects para desktop */
-@media (hover: hover) {
-    .employeeCard:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 12px 28px rgba(0, 0, 0, 0.15);
-    }
-    
-    .filterPill:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
     }
 }

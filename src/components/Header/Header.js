@@ -1,52 +1,54 @@
 // src/components/Header/Header.js
 'use client';
 
-import { useState, useEffect } from 'react'; // NOVO: Adicionado useEffect
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation'; // NOVO: Adicionado useRouter
+import { usePathname, useRouter } from 'next/navigation';
 import styles from './Header.module.css';
 import Image from 'next/image';
 import { Menu, X, LogOut, User } from 'lucide-react';
 
+// ALTERADO: Adicionado novo item de navegação para "Afastados"
 const navItems = [
-        { href: '/dashboard', label: 'Dashboard' },
+    { href: '/dashboard', label: 'Dashboard' },
     { href: '/funcionarios', label: 'Funcionários' },
+    { href: '/afastados', label: 'Afastados' }, // NOVO LINK
+    { href: '/planejamento', label: 'Planejamento' },
     { href: '/importacao', label: 'Importar Planilha' },
-        { href: '/planejamento', label: 'Planejamento' },
-                { href: '/usuarios', label: 'Usuarios' },
-
-
+    { href: '/usuarios', label: 'Usuários' }, // Corrigido 'Usuarios' para 'Usuários'
 ];
-
-// REMOVIDO: O mockUser não é mais necessário
-// const mockUser = {
-//     name: 'Admin RH',
-//     email: 'admin@empresa.com'
-// }
 
 export default function Header() {
     const pathname = usePathname();
-    const router = useRouter(); // NOVO: Hook para navegação
+    const router = useRouter();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
-    const [currentUser, setCurrentUser] = useState(null); // NOVO: Estado para o usuário logado
+    const [currentUser, setCurrentUser] = useState(null);
 
-    // NOVO: Efeito para carregar os dados do usuário do localStorage
     useEffect(() => {
-        const userData = localStorage.getItem('user');
-        if (userData) {
-            setCurrentUser(JSON.parse(userData));
+        // Tenta buscar os dados do usuário do localStorage.
+        // A chave 'user' deve ser consistente com o que você salva no login.
+        const userDataString = localStorage.getItem('user');
+        if (userDataString) {
+            try {
+                const userData = JSON.parse(userDataString);
+                // O backend retorna user: { email, role }. Adicionamos um nome padrão se não houver.
+                setCurrentUser({ name: userData.nome || 'Admin', ...userData });
+            } catch (error) {
+                console.error("Erro ao parsear dados do usuário:", error);
+                // Limpa dados inválidos
+                localStorage.removeItem('user');
+            }
         }
     }, []);
-
 
     const toggleMenu = () => {
         setIsMenuOpen(!isMenuOpen);
     };
 
-    // NOVO: Função para realizar o logout
     const handleLogout = () => {
         localStorage.removeItem('authToken');
         localStorage.removeItem('user');
+        setCurrentUser(null);
         router.push('/login');
     };
 
@@ -67,7 +69,11 @@ export default function Header() {
                         const isActive = pathname.startsWith(item.href);
                         return (
                             <li key={item.href}>
-                                <Link href={item.href} className={`${styles.navLink} ${isActive ? styles.active : ''}`} onClick={toggleMenu}>
+                                <Link 
+                                    href={item.href} 
+                                    className={`${styles.navLink} ${isActive ? styles.active : ''}`} 
+                                    onClick={() => isMenuOpen && toggleMenu()} // Fecha o menu mobile ao clicar
+                                >
                                     {item.label}
                                 </Link>
                             </li>
@@ -77,12 +83,12 @@ export default function Header() {
             </nav>
 
             <div className={styles.headerRight}>
-                <div className={styles.userInfo}>
-                    <User size={20} className={styles.userIcon} />
-                    {/* ALTERADO: Exibe o nome do usuário do estado, com um fallback */}
-                    <span className={styles.userName}>{currentUser ? currentUser.name : 'Usuário'}</span>
-                </div>
-                {/* ALTERADO: Adicionado onClick ao botão de logout */}
+                {currentUser && (
+                     <div className={styles.userInfo}>
+                        <User size={20} className={styles.userIcon} />
+                        <span className={styles.userName}>{currentUser.nome || 'Usuário'}</span>
+                    </div>
+                )}
                 <button className={styles.logoutButton} onClick={handleLogout} title="Sair">
                     <LogOut size={20} />
                 </button>

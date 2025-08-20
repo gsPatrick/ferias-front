@@ -1,13 +1,8 @@
+// src/app/(dashboard)/funcionarios/[matricula]/page.js
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-// ==========================================================
-// IMPORTANTE: 'use' não é um hook padrão do React. 
-// Acredito que foi um erro de digitação e o correto para pegar
-// os parâmetros no App Router é apenas usar o que vem das props.
-// Vou remover a importação e o uso de `use(params)`.
-// ==========================================================
+import { useRouter, useParams } from 'next/navigation';
 import api from '@/services/api';
 import styles from './page.module.css';
 import Card from '@/components/Card/Card';
@@ -15,29 +10,25 @@ import Table from '@/components/Table/Table';
 import Button from '@/components/Button/Button';
 import Modal from '@/components/Modal/Modal';
 import ActionMenu from '@/components/ActionMenu/ActionMenu';
-import { User, Calendar, Briefcase, PlusCircle, Trash2, CalendarPlus, FileWarning } from 'lucide-react';
+import { User, Calendar, Briefcase, PlusCircle, Trash2, CalendarPlus, FileWarning, Download } from 'lucide-react';
 
-const feriasColumns = [ 
-    { header: 'Início', accessor: 'data_inicio' }, 
-    { header: 'Fim', accessor: 'data_fim' }, 
-    { header: 'Status', accessor: 'status' } 
-];
+// --- FUNÇÕES HELPER ---
 
-const afastamentosColumns = [ 
-    { header: 'Motivo', accessor: 'motivo' }, 
-    { header: 'Início', accessor: 'data_inicio' }, 
-    { header: 'Fim', accessor: 'data_fim' }, 
-    { header: 'Dias', accessor: 'dias', cell: (row) => {
-        if (!row.data_inicio || !row.data_fim) return 'N/A';
-        return Math.round((new Date(row.data_fim) - new Date(row.data_inicio)) / (1000 * 60 * 60 * 24)) + 1;
-    }} 
-];
+const downloadFile = (blob, fileName) => {
+    const url = window.URL.createObjectURL(new Blob([blob]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', fileName);
+    document.body.appendChild(link);
+    link.click();
+    link.parentNode.removeChild(link);
+    window.URL.revokeObjectURL(url);
+};
 
 const formatDateForInput = (dateString) => {
     if (!dateString) return '';
     const date = new Date(dateString);
     if (isNaN(date.getTime())) return '';
-    // Corrigindo para usar o fuso horário local corretamente
     const year = date.getUTCFullYear();
     const month = String(date.getUTCMonth() + 1).padStart(2, '0');
     const day = String(date.getUTCDate()).padStart(2, '0');
@@ -51,19 +42,55 @@ const formatDateForDisplay = (dateString) => {
     return date.toLocaleDateString('pt-BR', { timeZone: 'UTC' });
 };
 
-export default function FuncionarioProfilePage({ params }) {
-    // ==========================================================
-    // CORREÇÃO: Acessando a matrícula diretamente dos parâmetros.
-    // ==========================================================
+const afastamentosColumns = [ 
+    { header: 'Motivo', accessor: 'motivo' }, 
+    { header: 'Início', accessor: 'data_inicio', cell: (row) => formatDateForDisplay(row.data_inicio) }, 
+    { header: 'Fim', accessor: 'data_fim', cell: (row) => formatDateForDisplay(row.data_fim) }, 
+    { header: 'Dias', accessor: 'dias', cell: (row) => {
+        if (!row.data_inicio || !row.data_fim) return 'N/A';
+        const diffTime = Math.abs(new Date(row.data_fim) - new Date(row.data_inicio));
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+        return diffDays;
+    }} 
+];
+
+// --- COMPONENTE PRINCIPAL ---
+
+export default function FuncionarioProfilePage() {
+    const params = useParams();
     const { matricula } = params;
     const router = useRouter();
 
     const [funcionario, setFuncionario] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('dados');
-    const [modalState, setModalState] = useState({ type: null, isOpen: false });
+    const [modalState, setModalState] = useState({ type: null, data: null, isOpen: false });
 
-    // Função para buscar dados do funcionário
+    const handleGerarAviso = async (feriasId, nomeFuncionario) => {
+        if (!feriasId) return;
+        try {
+            const response = await api.relatorios.getAvisoFerias(feriasId);
+            downloadFile(response.data, `Aviso_Ferias_${nomeFuncionario.replace(/\s/g, '_')}.xlsx`);
+        } catch (error) {
+            console.error("Erro ao gerar aviso de férias:", error);
+            alert("Não foi possível gerar o aviso de férias.");
+        }
+    };
+    
+    const feriasColumns = [ 
+        { header: 'Início', accessor: 'data_inicio', cell: (row) => formatDateForDisplay(row.data_inicio) }, 
+        { header: 'Fim', accessor: 'data_fim', cell: (row) => formatDateForDisplay(row.data_fim) }, 
+        { header: 'Status', accessor: 'status' },
+        { header: 'Aviso', accessor: 'aviso', cell: (row) => (
+            <Button 
+                variant="secondary" 
+                onClick={() => handleGerarAviso(row.id, funcionario?.nome_funcionario || 'Funcionario')}
+            >
+                <Download size={16}/>
+            </Button>
+        )}
+    ];
+
     const fetchFuncionario = async () => {
         if (!matricula) return;
         setIsLoading(true);
@@ -83,7 +110,7 @@ export default function FuncionarioProfilePage({ params }) {
     }, [matricula]);
     
     const openModal = (type) => setModalState({ type, isOpen: true });
-    const closeModal = () => setModalState({ type: null, isOpen: false });
+    const closeModal = () => setModalState({ type: null, data: null, isOpen: false });
     
     const handleUpdateFuncionario = async (event) => {
         event.preventDefault();
@@ -102,21 +129,12 @@ export default function FuncionarioProfilePage({ params }) {
     const handleLancarFerias = async (event) => {
         event.preventDefault();
         const formData = new FormData(event.target);
-        const data = Object.fromEntries(formData.entries());
-
-        // ==========================================================
-        // CORREÇÃO: O backend espera a matrícula no corpo dos dados.
-        // E o serviço de api.js não passa a matrícula como parâmetro separado para `createFerias`.
-        // Precisamos adicionar a matrícula ao objeto `data`.
-        // ==========================================================
-        data.matricula_funcionario = matricula;
-
+        const data = {
+            ...Object.fromEntries(formData.entries()),
+            matricula_funcionario: matricula
+        };
         try {
-            // Supondo que você adicionará uma função `create` em `api.ferias`
-            // api.js (sugestão): ferias: { create: (data) => apiClient.post('/ferias', data) }
-            // Se a rota for aninhada, seria `create: (matricula, data) => ...`
-            await api.ferias.create(data); // Assumindo que você criará api.ferias.create(data)
-
+            await api.ferias.create(data);
             alert('Férias lançadas com sucesso!');
             closeModal();
             fetchFuncionario();
@@ -130,28 +148,14 @@ export default function FuncionarioProfilePage({ params }) {
         event.preventDefault();
         const formData = new FormData(event.target);
         const data = Object.fromEntries(formData.entries());
-
-        // O campo 'impacta_ferias' é um checkbox, seu valor pode não estar presente se não for marcado.
-        // Garantimos que ele seja um booleano.
         data.impacta_ferias = !!data.impacta_ferias;
-
         try {
-            // ==========================================================
-            // CORREÇÃO CENTRAL: Chamando a função correta do seu api.js
-            // O serviço `api.afastamentos.create` espera (matricula, data).
-            // `api` é o objeto importado, `afastamentos` é a chave e `create` é a função.
-            // O `TypeError` acontece porque você estava chamando `api.afastamentos.create` sem que `api` ou `api.afastamentos` estivessem definidos corretamente no momento da chamada (problema de escopo ou importação errada)
-            // Agora, com `api` importado diretamente, a chamada fica correta e explícita.
-            // ==========================================================
             await api.afastamentos.create(matricula, data);
-
             alert('Afastamento lançado com sucesso!');
             closeModal();
             fetchFuncionario();
         } catch(error) {
             console.error("Falha ao lançar afastamento:", error);
-            // O erro 404 que você viu era porque a rota não existia no backend.
-            // Agora que a rota foi criada, o erro (se houver) será de validação ou do servidor (500).
             alert(error.response?.data?.message || "Erro ao lançar afastamento.");
         }
     };
@@ -415,7 +419,7 @@ export default function FuncionarioProfilePage({ params }) {
                             </div>
                             <div className={styles.formGroup}>
                                 <label>Data de Fim</label>
-                                <input name="data_fim" type="date" required/>
+                                <input name="data_fim" type="date" />
                             </div>
                             <div className={styles.formGroup}>
                                 <label className={styles.checkboxLabel}>

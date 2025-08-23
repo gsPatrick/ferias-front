@@ -7,8 +7,8 @@ import Table from '@/components/Table/Table';
 import Button from '@/components/Button/Button';
 import Modal from '@/components/Modal/Modal';
 import ActionMenu from '@/components/ActionMenu/ActionMenu';
-import styles from './usuarios.module.css'; // Criaremos este CSS
-import { UserPlus, Edit, Trash2 } from 'lucide-react';
+import styles from './usuarios.module.css';
+import { Users, UserPlus, Edit, Trash2 } from 'lucide-react';
 
 export default function UsuariosPage() {
     const [users, setUsers] = useState([]);
@@ -42,7 +42,7 @@ export default function UsuariosPage() {
 
         try {
             if (modalState.type === 'edit') {
-                if (!data.password) delete data.password; // Não envia senha se o campo estiver vazio
+                if (!data.password) delete data.password;
                 await api.users.update(modalState.data.id, data);
                 alert('Usuário atualizado com sucesso!');
             } else {
@@ -86,7 +86,10 @@ export default function UsuariosPage() {
         <>
             <div className={styles.container}>
                 <div className={styles.header}>
-                    <h1>Gerenciar Usuários</h1>
+                    <div className={styles.titleContainer}>
+                        <Users size={32} />
+                        <h1>Gerenciar Usuários</h1>
+                    </div>
                     <Button icon={<UserPlus size={16} />} onClick={() => openModal('add')}>
                         Adicionar Usuário
                     </Button>
@@ -107,17 +110,32 @@ export default function UsuariosPage() {
             >
                 {modalState.type === 'add' || modalState.type === 'edit' ? (
                     <form onSubmit={handleFormSubmit}>
-                        <div className={styles.formGroup}>
-                            <label>Nome Completo</label>
-                            <input name="nome" type="text" defaultValue={modalState.data?.nome} required />
-                        </div>
-                        <div className={styles.formGroup}>
-                            <label>E-mail</label>
-                            <input name="email" type="email" defaultValue={modalState.data?.email} required />
-                        </div>
-                        <div className={styles.formGroup}>
-                            <label>Senha</label>
-                            <input name="password" type="password" placeholder={modalState.type === 'edit' ? 'Deixe em branco para não alterar' : ''} required={modalState.type === 'add'} />
+                        <div className={styles.formGrid}>
+                            <div className={styles.formGroup}>
+                                <label htmlFor="nome">Nome Completo</label>
+                                <input id="nome" name="nome" type="text" defaultValue={modalState.data?.nome} required />
+                            </div>
+                            <div className={styles.formGroup}>
+                                <label htmlFor="email">E-mail</label>
+                                <input id="email" name="email" type="email" defaultValue={modalState.data?.email} required />
+                            </div>
+                            <div className={styles.formGroup}>
+                                <label htmlFor="password">Senha</label>
+                                <input id="password" name="password" type="password" placeholder={modalState.type === 'edit' ? 'Deixe em branco para não alterar' : ''} required={modalState.type === 'add'} />
+                            </div>
+                            
+                            {/* ========================================================== */}
+                            {/* CAMPO DE ROLE ADICIONADO AQUI */}
+                            {/* ========================================================== */}
+                            <div className={styles.formGroup}>
+                                <label htmlFor="role">Função</label>
+                                <select id="role" name="role" defaultValue={modalState.data?.role || 'admin'} required>
+                                    <option value="admin">Administrador</option>
+                                    <option value="user">Usuário Padrão</option>
+                                    {/* Adicione outras roles aqui se necessário */}
+                                </select>
+                            </div>
+
                         </div>
                         <div className={styles.modalActions}>
                             <Button type="button" variant="secondary" onClick={closeModal}>Cancelar</Button>
@@ -125,7 +143,7 @@ export default function UsuariosPage() {
                         </div>
                     </form>
                 ) : (
-                    <div>
+                    <div className={styles.modalBody}>
                         <p>Tem certeza que deseja excluir o usuário <strong>{modalState.data?.nome}</strong>?</p>
                         <div className={styles.modalActions}>
                             <Button variant="secondary" onClick={closeModal}>Cancelar</Button>

@@ -1,402 +1,370 @@
 /* src/app/(dashboard)/funcionarios/funcionarios.module.css */
 
 .container {
+    padding: 2rem;
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
-    padding: 1rem;
-    max-width: 100%;
-    overflow-x: hidden;
+    max-width: 100vw; /* Limita a largura máxima do container */
+    overflow-x: hidden; /* Evita overflow horizontal no container principal */
 }
 
+/* --- CABEÇALHO --- */
 .header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     flex-wrap: wrap;
     gap: 1.5rem;
-    padding: 1.5rem;
-    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-    border-radius: 12px;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-    border: 1px solid #e2e8f0;
-    backdrop-filter: blur(10px);
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid #e5e7eb;
 }
 
-.searchContainer {
-    position: relative;
-    flex-grow: 1;
-    min-width: 280px;
-    max-width: 450px;
-}
-
-.searchIcon {
-    position: absolute;
-    left: 1rem;
-    top: 50%;
-    transform: translateY(-50%);
-    color: #64748b;
-    z-index: 2;
-}
-
-.searchInput {
-    width: 100%;
-    padding: 1rem 1rem 1rem 3rem;
-    border: 2px solid #e2e8f0;
-    border-radius: 50px;
-    font-size: 0.95rem;
-    transition: all 0.3s ease;
-    background-color: #ffffff;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-    font-weight: 500;
-}
-
-.searchInput:focus {
-    outline: none;
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1), 0 4px 12px rgba(0, 0, 0, 0.1);
-    transform: translateY(-1px);
-}
-
-.searchInput::placeholder {
-    color: #94a3b8;
-    font-weight: 400;
-}
-
-.actions {
+.titleContainer {
     display: flex;
+    align-items: center;
     gap: 1rem;
-    flex-wrap: wrap;
-}
-
-.activeFiltersAndClear {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    padding: 1.5rem;
-    background: linear-gradient(135deg, #f1f5f9 0%, #ffffff 100%);
-    border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-    border: 1px solid #e2e8f0;
-    animation: slideIn 0.3s ease-out;
-}
-
-@keyframes slideIn {
-    from {
-        opacity: 0;
-        transform: translateY(-10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.activeFiltersContainer {
-    display: flex;
-    flex-wrap: wrap; 
-    gap: 0.75rem; 
-    align-items: center;
-    font-size: 0.9rem;
-    color: #334155;
-}
-
-.filterPill {
-    display: inline-flex;
-    align-items: center;
-    background: linear-gradient(135deg, #dbeafe 0%, #e0f2fe 100%);
-    border: 1px solid #93c5fd;
-    padding: 0.5rem 1rem;
-    border-radius: 25px;
-    color: #1e40af;
-    font-weight: 500;
-    white-space: nowrap;
-    animation: fadeInScale 0.3s ease;
-    transition: all 0.2s ease;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-}
-
-.filterPill:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-@keyframes fadeInScale {
-    from {
-        opacity: 0;
-        transform: scale(0.8);
-    }
-    to {
-        opacity: 1;
-        transform: scale(1);
-    }
-}
-
-.filterPill strong {
-    font-weight: 600;
-    margin-left: 0.25rem;
-}
-
-.clearFilterButton {
-    background: none;
-    border: none;
-    cursor: pointer;
-    color: #1e40af;
-    display: flex;
-    align-items: center;
-    margin-left: 0.5rem;
-    padding: 0.2rem;
-    border-radius: 50%;
-    transition: all 0.2s ease;
-}
-
-.clearFilterButton:hover {
-    color: #dc2626;
-    background-color: #fee2e2;
-    transform: scale(1.1);
-}
-
-.clearAllFiltersButton {
-    align-self: flex-end;
-    transition: all 0.2s ease;
-}
-
-.clearAllFiltersButton:hover {
-    transform: translateY(-1px);
-}
-
-.bulkActionsPanel {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1.25rem;
-    padding: 1.5rem 2rem;
-    background: linear-gradient(135deg, #dbeafe 0%, #e0f2fe 100%);
-    color: #1e40af;
-    border-radius: 12px;
-    animation: slideIn 0.3s ease;
-    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
-    border: 1px solid #93c5fd;
-    backdrop-filter: blur(10px);
-}
-
-.bulkActionsPanel span {
-    font-weight: 600;
-    font-size: 1rem;
-}
-
-.tableSummaryAndExport {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 1rem;
-    padding: 1rem 1.5rem;
-    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-    border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-    border: 1px solid #e2e8f0;
-}
-
-.summaryText {
-    font-size: 0.9rem;
-    color: #64748b;
-    font-weight: 500;
-}
-
-.tableWrapper {
-    flex-grow: 1;
-    background-color: #ffffff;
-    border-radius: 12px;
-    overflow: hidden;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-    border: 1px solid #e2e8f0;
-    position: relative;
-}
-
-.nomeLink {
-    color: #3b82f6;
-    font-weight: 600;
-    text-decoration: none;
-    display: block;
-    transition: color 0.2s ease;
-}
-
-.nomeLink:hover {
-    color: #1d4ed8;
-    text-decoration: underline;
-}
-
-.saldoCell {
-    font-weight: 700;
-    font-family: 'Courier New', monospace;
-    text-align: center;
-    color: #1e293b;
-    background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
-    padding: 0.5rem;
-    border-radius: 6px;
-    min-width: 60px;
-}
-
-.limiteCell {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-}
-
-.riskIndicator {
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    flex-shrink: 0;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.riskIndicator.low { 
-    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-}
-.riskIndicator.medium { 
-    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-}
-.riskIndicator.high { 
-    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-    animation: pulse 2s infinite;
-}
-.riskIndicator.expired {
-    background: linear-gradient(135deg, #374151 0%, #1f2937 100%);
-    border: 2px solid #ef4444;
-    animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.1); }
-}
-
-.statusBadge {
-    padding: 0.4rem 1rem;
-    border-radius: 25px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    white-space: nowrap;
-    display: inline-flex;
-    align-items: center;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    transition: transform 0.2s ease;
-}
-
-.statusBadge:hover {
-    transform: translateY(-1px);
-}
-
-.statusAtivo {
-    background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
-    color: #065f46;
-    border: 1px solid #10b981;
-}
-
-.statusInativo {
-    background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
-    color: #374151;
-    border: 1px solid #9ca3af;
-}
-
-.loading, .noData {
-    padding: 4rem 2rem;
-    text-align: center;
-    color: #64748b;
-    font-style: italic;
-    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-    border-radius: 12px;
-    border: 2px dashed #cbd5e1;
-    font-size: 1.1rem;
-}
-
-.loadingContainer {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 60vh;
-    font-size: 1.2rem;
-    color: #64748b;
-}
-
-.modalContent {
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
-}
-
-.modalContent p strong {
     color: var(--cor-primaria-profundo);
 }
 
-.modalActions {
-    display: flex;
-    justify-content: flex-end;
-    gap: 1rem;
-    margin-top: 1.5rem;
-    flex-wrap: wrap;
+.titleContainer h1 {
+    font-size: 2rem;
+    font-weight: 700;
 }
 
-/* ========================================================== */
-/* ESTILOS DO FORMULÁRIO DO MODAL CORRIGIDOS E MELHORADOS */
-/* ========================================================== */
-.formGrid {
+/* --- ÁREA DE FILTROS --- */
+.filterGrid {
     display: grid;
-    /* ALTERADO: Força duas colunas em telas maiores */
-    grid-template-columns: repeat(2, 1fr);
-    gap: 1.25rem 1.5rem; /* Espaçamento vertical e horizontal */
+    grid-template-columns: repeat(5, 1fr); /* Máximo 5 colunas por linha */
+    gap: 1.25rem;
+    padding: 1.5rem;
+    background-color: var(--cor-branco);
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    width: 100%;
 }
 
 .formGroup {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
+    min-width: 0; /* Permite que os itens encolham */
 }
 
 .formGroup label {
     font-weight: 500;
-    font-size: 0.875rem;
-    color: #374151; /* --cor-texto-principal mais suave */
+    font-size: 0.8rem;
+    color: #4b5563;
+    text-transform: uppercase;
+    white-space: nowrap; /* Evita quebra de linha nos labels */
 }
 
 .formGroup input,
 .formGroup select {
     width: 100%;
-    padding: 0.75rem 1rem;
-    border: 1px solid #D1D5DB; /* Borda sutil */
-    border-radius: var(--raio-borda);
-    background-color: var(--cor-fundo); /* Fundo um pouco diferente para contraste */
+    padding: 0.6rem 0.8rem;
+    border-radius: 8px;
+    border: 1px solid #d1d5db;
+    background-color: #f9fafb;
     font-size: 0.9rem;
-    transition: all 0.2s ease-in-out;
+    min-width: 0; /* Permite que os inputs encolham */
 }
 
-.formGroup input:focus,
-.formGroup select:focus {
+.formGroup input:focus, .formGroup select:focus {
     outline: none;
     border-color: var(--cor-primaria-medio);
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+.inputIconWrapper {
+    position: relative;
+}
+
+.inputIcon {
+    position: absolute;
+    left: 0.8rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #9ca3af;
+}
+
+.searchGroup input {
+    padding-left: 2.5rem;
+}
+
+.filterActions {
+    display: flex;
+    align-items: flex-end;
 }
 
 /* ========================================================== */
-/* RESPONSIVIDADE DO FORMULÁRIO E DO MODAL */
+/* TABELA COM SCROLL INTERNO E TAMANHO MÁXIMO CONTROLADO     */
 /* ========================================================== */
-@media (max-width: 768px) {
-    /* ... (outras regras responsivas que você já tem) ... */
+.tableWrapper {
+    overflow-x: auto; /* Scroll horizontal interno */
+    overflow-y: auto; /* Scroll vertical se necessário */
+    width: 100%;
+    max-width: 100vw; /* Nunca ultrapassa a largura da viewport */
+    max-height: 70vh; /* Altura máxima da tabela (70% da viewport) */
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05);
+    background-color: white;
+}
 
-    /* ALTERADO: Faz o formulário ter apenas uma coluna em telas menores */
-    .formGrid {
-        grid-template-columns: 1fr;
+.table {
+    width: 100%;
+    min-width: 1800px; /* Largura mínima para ativar scroll horizontal */
+    border-collapse: collapse;
+    font-size: 0.875rem;
+}
+
+.table th, .table td {
+    padding: 0.8rem 1rem;
+    text-align: left;
+    border-bottom: 1px solid #e2e8f0;
+    vertical-align: top; /* Alinha o conteúdo no topo da célula */
+    word-wrap: break-word; /* Quebra palavras longas */
+    overflow-wrap: break-word; /* Suporte adicional para quebra de palavras */
+    hyphens: auto; /* Adiciona hífens automáticos */
+    line-height: 1.4; /* Melhora o espaçamento entre linhas */
+}
+
+.table thead th {
+    background-color: #f8fafc;
+    font-weight: 600;
+    color: #475569;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    white-space: nowrap; /* Cabeçalhos não quebram linha */
+}
+
+.table tr:last-child td {
+    border-bottom: none;
+}
+
+/* Colunas Congeladas (Sticky) */
+.stickyColumn {
+    position: sticky;
+    left: 0;
+    background-color: #ffffff;
+    z-index: 5;
+    border-right: 2px solid #e2e8f0; /* Destaque visual para colunas fixas */
+}
+
+.table thead .stickyColumn {
+    background-color: #f8fafc;
+    z-index: 15;
+}
+
+.table tbody tr:hover .stickyColumn {
+    background-color: #f8fafc !important;
+}
+
+.checkboxCell {
+    width: 50px;
+    padding: 0.5rem;
+    text-align: center;
+    min-width: 50px;
+    white-space: nowrap; /* Checkbox não quebra */
+}
+
+.stickyColumn.checkboxCell {
+    border-right: 1px solid #e2e8f0;
+}
+
+.table tbody tr.selectedRow .stickyColumn {
+    background-color: #eff6ff !important;
+}
+
+/* Estilos de Células */
+.nomeLink { 
+    color: #2563eb; 
+    font-weight: 600; 
+    text-decoration: none; 
+}
+
+.nomeLink:hover { 
+    text-decoration: underline; 
+}
+
+.limiteCell { 
+    display: flex; 
+    align-items: center; 
+    gap: 0.75rem; 
+    flex-wrap: wrap; /* Permite quebra se necessário */
+}
+
+.riskIndicator { 
+    width: 10px; 
+    height: 10px; 
+    border-radius: 50%; 
+    flex-shrink: 0; 
+}
+
+.riskIndicator.low { background-color: #10b981; }
+.riskIndicator.medium { background-color: #f59e0b; }
+.riskIndicator.high { background-color: #ef4444; }
+.riskIndicator.expired { background-color: #374151; }
+
+.statusBadge { 
+    padding: 0.3rem 0.8rem; 
+    border-radius: 20px; 
+    font-size: 0.75rem; 
+    font-weight: 600; 
+    text-transform: uppercase; 
+    white-space: nowrap; /* Status não quebra */
+    display: inline-block;
+}
+
+.statusAtivo { 
+    background-color: #dcfce7; 
+    color: #166534; 
+}
+
+.statusInativo { 
+    background-color: #f3f4f6; 
+    color: #4b5563; 
+}
+
+/* CÉLULAS COM TEXTO LONGO - PERMITEM QUEBRA DE LINHA E AJUSTE DE ALTURA */
+.situacaoCell, .convencaoCell { 
+    white-space: normal; /* Permite quebra de linha */
+    min-width: 200px; /* Largura mínima */
+    max-width: 350px; /* Largura máxima para controlar expansão */
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    line-height: 1.4;
+    padding: 1rem; /* Padding maior para células com muito texto */
+}
+
+/* CÉLULAS DE DATA - MANTÉM FORMATO COMPACTO */
+.table td:nth-child(7), /* Data Admissão */
+.table td:nth-child(9), /* Início Período */
+.table td:nth-child(10), /* Fim Período */
+.table td:nth-child(11), /* Data Limite */
+.table td:nth-child(13) /* Última Data Planejada */ {
+    white-space: nowrap;
+    min-width: 100px;
+    max-width: 120px;
+}
+
+/* CÉLULAS DE NÚMERO - MANTÉM ALINHAMENTO */
+.table td:nth-child(2), /* Matrícula */
+.table td:nth-child(13), /* Qtd. Faltas */
+.table td:nth-child(20) /* ID Gestão */ {
+    text-align: center;
+    white-space: nowrap;
+    min-width: 80px;
+}
+
+/* CÉLULAS DE NOME - PERMITEM EXPANSÃO */
+.table td:nth-child(4) { /* Nome */
+    min-width: 200px;
+    max-width: 300px;
+    white-space: normal;
+    word-wrap: break-word;
+    font-weight: 600;
+}
+
+/* CÉLULAS DE CATEGORIA E HORÁRIO - PERMITEM QUEBRA */
+.table td:nth-child(14), /* Categoria/Cargo */
+.table td:nth-child(15), /* Cat. Trab */
+.table td:nth-child(16), /* Horário */
+.table td:nth-child(17) /* Escala */ {
+    white-space: normal;
+    min-width: 120px;
+    max-width: 200px;
+    word-wrap: break-word;
+}
+
+/* CÉLULAS DE LOCALIZAÇÃO */
+.table td:nth-child(18), /* UF */
+.table td:nth-child(19) /* Gestão Contrato */ {
+    white-space: normal;
+    min-width: 100px;
+    max-width: 180px;
+    word-wrap: break-word;
+}
+
+/* PRÓXIMO PERÍODO - TEXTO MAIS LONGO */
+.table td:nth-child(8) { /* Próx. Período */
+    white-space: normal;
+    min-width: 150px;
+    max-width: 250px;
+    word-wrap: break-word;
+    line-height: 1.3;
+}
+
+/* ESTADOS DE CARREGAMENTO E VAZIO */
+.loading, .noData { 
+    text-align: center; 
+    padding: 3rem; 
+    color: #6b7280; 
+    font-style: italic;
+}
+
+/* MODAL */
+.modalFormGrid { 
+    display: grid; 
+    grid-template-columns: repeat(2, 1fr); 
+    gap: 1.25rem 1.5rem; 
+}
+
+/* RESPONSIVIDADE */
+@media (max-width: 1200px) {
+    .filterGrid {
+        grid-template-columns: repeat(4, 1fr); /* 4 colunas em telas médias */
     }
+}
 
-    .modalActions {
-        flex-direction: column-reverse; /* Botão principal fica por último (embaixo) */
+@media (max-width: 992px) {
+    .filterGrid {
+        grid-template-columns: repeat(3, 1fr); /* 3 colunas em telas menores */
+    }
+    
+    .tableWrapper {
+        max-height: 60vh; /* Reduz altura em telas menores */
+    }
+}
+
+@media (max-width: 768px) {
+    .container {
+        padding: 1rem;
+    }
+    
+    .filterGrid {
+        grid-template-columns: repeat(2, 1fr); /* 2 colunas em tablets */
+        padding: 1rem;
+    }
+    
+    .modalFormGrid { 
+        grid-template-columns: 1fr; 
+    }
+    
+    .tableWrapper {
+        max-height: 50vh;
+    }
+    
+    .table {
+        min-width: 1200px; /* Reduz largura mínima em mobile */
+    }
+}
+
+@media (max-width: 480px) {
+    .filterGrid {
+        grid-template-columns: 1fr; /* 1 coluna em celulares */
+    }
+    
+    .header {
+        flex-direction: column;
         align-items: stretch;
     }
     
-    .modalActions > * {
-        width: 100%;
+    .titleContainer {
+        justify-content: center;
     }
-}
+}   

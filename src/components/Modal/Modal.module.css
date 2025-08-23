@@ -11,7 +11,7 @@
     justify-content: center;
     align-items: center;
     z-index: 50;
-    padding: 1rem; /* Adiciona padding para evitar que o modal cole nas bordas em telas pequenas */
+    padding: 1rem;
 }
 
 .modalContent {
@@ -21,16 +21,14 @@
     width: 100%;
     
     /* ========================================================== */
-    /* ALTERAÇÃO PRINCIPAL AQUI: Aumentando a largura máxima */
+    /* ALTERAÇÃO PRINCIPAL AQUI: Aumentando a largura máxima      */
     /* ========================================================== */
     max-width: 800px; /* Era 500px, agora é mais largo para acomodar 2 colunas */
     
     overflow: hidden;
-    display: flex; /* Habilita flexbox para o layout interno */
-    flex-direction: column; /* Organiza header e body verticalmente */
-
-    /* Garante que o modal não seja mais alto que a tela */
-    max-height: 90vh; 
+    display: flex;
+    flex-direction: column;
+    max-height: 90vh; /* Garante que o modal não seja mais alto que a tela */
 }
 
 .header {
@@ -39,7 +37,7 @@
     align-items: center;
     padding: 1.25rem 1.5rem;
     border-bottom: 1px solid #E5E7EB;
-    flex-shrink: 0; /* Impede que o header encolha */
+    flex-shrink: 0;
 }
 
 .title {
@@ -66,7 +64,7 @@
 .body {
     padding: 1.5rem;
     /* ========================================================== */
-    /* NOVA PROPRIEDADE: Habilita a rolagem se o conteúdo for muito grande */
+    /* NOVA PROPRIEDADE: Habilita a rolagem se o conteúdo for grande */
     /* ========================================================== */
     overflow-y: auto;
 }

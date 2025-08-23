@@ -6,18 +6,20 @@
 
 .mainContainer {
     flex: 1;
-    /* Removido: margin-left baseado na sidebar */
     display: flex;
     flex-direction: column;
     transition: margin-left 0.3s ease;
 }
 
-/* Removido: .mainContainer.mainContainerCollapsed */
-
 .content {
     margin-top: var(--altura-header); 
     background-color: var(--cor-fundo);
     flex-grow: 1;
-}
 
-/* Removido: Media query para responsividade */
+    /* 1. REMOVIDO: A propriedade 'overflow-x: auto' foi retirada daqui. */
+    /*    Isso impede que a página inteira crie uma barra de rolagem. */
+
+    /* 2. "Truque" do Flexbox que permite ao 'overflow' dos filhos funcionar corretamente */
+    /*    Esta linha é importante e deve ser mantida. */
+    min-width: 0; 
+}

@@ -38,7 +38,6 @@
 html,
 body {
   max-width: 100vw;
-  overflow-x: hidden;
   font-family: var(--font-inter);
   color: var(--cor-texto-principal);
   background-color: var(--cor-fundo);

@@ -1,3 +1,4 @@
+// src/app/(dashboard)/importacao/page.js
 'use client';
 
 import { useState, useCallback } from 'react';
@@ -10,11 +11,8 @@ import {
     FileText, 
     CheckCircle, 
     AlertTriangle, 
-    Users, 
     FileSpreadsheet,
     ArrowRight,
-    Download,
-    Info
 } from 'lucide-react';
 
 export default function ImportacaoPage() {
@@ -22,6 +20,7 @@ export default function ImportacaoPage() {
     const [status, setStatus] = useState('idle');
     const [message, setMessage] = useState('');
     const [uploadProgress, setUploadProgress] = useState(0);
+    const [anoDistribuicao, setAnoDistribuicao] = useState(new Date().getFullYear());
 
     const onDrop = useCallback(acceptedFiles => {
         if (acceptedFiles.length > 0) {
@@ -47,19 +46,13 @@ export default function ImportacaoPage() {
         setMessage('');
         setUploadProgress(0);
 
-        // Simulação de progresso
         const progressInterval = setInterval(() => {
-            setUploadProgress(prev => {
-                if (prev >= 90) {
-                    clearInterval(progressInterval);
-                    return 90;
-                }
-                return prev + 10;
-            });
+            setUploadProgress(prev => Math.min(prev + 10, 90));
         }, 200);
 
         const formData = new FormData();
         formData.append('file', file);
+        formData.append('ano', anoDistribuicao);
 
         try {
             const response = await apiClient.post('/funcionarios/import', formData, {
@@ -75,7 +68,6 @@ export default function ImportacaoPage() {
                 setStatus('success');
                 setMessage(response.data.message || 'Arquivo importado com sucesso!');
                 setFile(null);
-                setUploadProgress(0);
             }, 500);
         } catch (error) {
             clearInterval(progressInterval);
@@ -97,9 +89,7 @@ export default function ImportacaoPage() {
         if(status === 'success') {
             return (
                 <div className={`${styles.statusMessage} ${styles.success} ${styles.fadeIn}`}>
-                    <div className={styles.statusIcon}>
-                        <CheckCircle />
-                    </div>
+                    <div className={styles.statusIcon}><CheckCircle /></div>
                     <div className={styles.statusContent}>
                         <h3>Sucesso!</h3>
                         <p>{message}</p>
@@ -110,9 +100,7 @@ export default function ImportacaoPage() {
         if(status === 'error') {
             return (
                 <div className={`${styles.statusMessage} ${styles.error} ${styles.fadeIn}`}>
-                    <div className={styles.statusIcon}>
-                        <AlertTriangle />
-                    </div>
+                    <div className={styles.statusIcon}><AlertTriangle /></div>
                     <div className={styles.statusContent}>
                         <h3>Erro na importação</h3>
                         <p>{message}</p>
@@ -123,16 +111,11 @@ export default function ImportacaoPage() {
         if(status === 'uploading') {
             return (
                 <div className={`${styles.statusMessage} ${styles.uploading} ${styles.fadeIn}`}>
-                    <div className={styles.statusIcon}>
-                        <div className={styles.spinner}></div>
-                    </div>
+                    <div className={styles.statusIcon}><div className={styles.spinner}></div></div>
                     <div className={styles.statusContent}>
                         <h3>Processando arquivo...</h3>
                         <div className={styles.progressBar}>
-                            <div 
-                                className={styles.progressFill} 
-                                style={{ width: `${uploadProgress}%` }}
-                            ></div>
+                            <div className={styles.progressFill} style={{ width: `${uploadProgress}%` }}></div>
                         </div>
                         <p>{uploadProgress}% concluído</p>
                     </div>
@@ -144,95 +127,63 @@ export default function ImportacaoPage() {
 
     return (
         <div className={styles.container}>
-            {/* Hero Section */}
-          
-
-            {/* Upload Card */}
             <div className={styles.uploadSection}>
                 <div className={styles.uploadCard}>
                     {!file ? (
-                        <div 
-                            {...getRootProps({ 
-                                className: `${styles.dropzone} ${isDragActive ? styles.active : ''} ${styles.slideIn}` 
-                            })}
-                        >
+                        <div {...getRootProps({ className: `${styles.dropzone} ${isDragActive ? styles.active : ''}` })}>
                             <input {...getInputProps()} />
                             <div className={styles.dropzoneContent}>
-                                <div className={styles.uploadIconContainer}>
-                                    <UploadCloud size={64} className={styles.uploadIcon} />
-                                    <div className={styles.iconPulse}></div>
-                                </div>
+                                <div className={styles.uploadIconContainer}><UploadCloud size={64} className={styles.uploadIcon} /></div>
                                 <div className={styles.dropzoneText}>
-                                    {isDragActive ? (
-                                        <h3>Solte o arquivo aqui...</h3>
-                                    ) : (
-                                        <>
-                                            <h3>Arraste sua planilha aqui</h3>
-                                            <p>ou <strong>clique para selecionar</strong></p>
-                                        </>
-                                    )}
+                                    {isDragActive ? <h3>Solte o arquivo aqui...</h3> : <><h3>Arraste sua planilha aqui</h3><p>ou <strong>clique para selecionar</strong></p></>}
                                 </div>
-                                <div className={styles.fileTypes}>
-                                    <FileSpreadsheet size={16} />
-                                    <span>Apenas arquivos .xlsx</span>
-                                </div>
+                                <div className={styles.fileTypes}><FileSpreadsheet size={16} /><span>Apenas arquivos .xlsx</span></div>
                             </div>
                         </div>
                     ) : (
-                        <div className={`${styles.filePreview} ${styles.slideIn}`}>
-                            <div className={styles.fileIcon}>
-                                <FileText size={32} />
-                            </div>
+                        <div className={styles.filePreview}>
+                            <div className={styles.fileIcon}><FileText size={32} /></div>
                             <div className={styles.fileInfo}>
                                 <h4>{file.name}</h4>
                                 <p>{(file.size / 1024).toFixed(2)} KB</p>
                             </div>
-                            <button 
-                                className={styles.removeFile} 
-                                onClick={resetUpload}
-                                disabled={status === 'uploading'}
-                            >
-                                ×
-                            </button>
+                            <button className={styles.removeFile} onClick={resetUpload} disabled={status === 'uploading'}>×</button>
                         </div>
                     )}
                     
+                    {file && status !== 'uploading' && status !== 'success' && (
+                        <div className={styles.optionsSection}>
+                            <label htmlFor="anoDistribuicao">Gerar Planejamento para o ano de:</label>
+                            <select 
+                                id="anoDistribuicao" 
+                                value={anoDistribuicao} 
+                                onChange={(e) => setAnoDistribuicao(e.target.value)}
+                                className={styles.selectAno}
+                            >
+                                <option value={new Date().getFullYear() + 1}>{new Date().getFullYear() + 1}</option>
+                                <option value={new Date().getFullYear()}>{new Date().getFullYear()}</option>
+                                <option value={new Date().getFullYear() - 1}>{new Date().getFullYear() - 1}</option>
+                            </select>
+                        </div>
+                    )}
+
                     {renderStatus()}
 
                     {file && status !== 'success' && (
                         <div className={styles.actions}>
-                            <Button 
-                                onClick={handleUpload} 
-                                disabled={!file || status === 'uploading'}
-                                className={styles.uploadButton}
-                            >
-                                {status === 'uploading' ? (
-                                    <>
-                                        <div className={styles.buttonSpinner}></div>
-                                        Processando...
-                                    </>
-                                ) : (
-                                    <>
-                                        Iniciar Importação
-                                        <ArrowRight size={16} />
-                                    </>
-                                )}
+                            <Button onClick={handleUpload} disabled={!file || status === 'uploading'} className={styles.uploadButton}>
+                                {status === 'uploading' ? <><div className={styles.buttonSpinner}></div>Processando...</> : <>Iniciar Importação<ArrowRight size={16} /></>}
                             </Button>
                         </div>
                     )}
 
                     {status === 'success' && (
                         <div className={styles.actions}>
-                            <Button onClick={resetUpload} className={styles.newUploadButton}>
-                                Nova Importação
-                            </Button>
+                            <Button onClick={resetUpload} className={styles.newUploadButton}>Nova Importação</Button>
                         </div>
                     )}
                 </div>
             </div>
-
-            {/* Instructions */}
-     
         </div>
     );
 }

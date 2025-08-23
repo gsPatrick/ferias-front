@@ -45,23 +45,25 @@ const api = {
   },
 
   afastamentos: {
-    // NOVO: Endpoint para a nova página de afastados
     getAllActive: (params) => apiClient.get('/afastamentos', { params }),
+    getById: (id) => apiClient.get(`/afastamentos/${id}`),
     create: (matriculaFuncionario, data) => apiClient.post(`/funcionarios/${matriculaFuncionario}/afastamentos`, data),
     update: (id, data) => apiClient.put(`/afastamentos/${id}`, data),
     remove: (id) => apiClient.delete(`/afastamentos/${id}`),
+    bulkRemove: (ids) => apiClient.delete('/afastamentos/bulk', { data: { ids } }),
   },
   
   ferias: {
-    create: (data) => apiClient.post('/ferias', data),
-    // ALTERADO: Funções de update e remove adicionadas para completude
+    getPlanejamentoAtivo: (params) => apiClient.get('/ferias/planejamento-ativo', { params }),
+    getById: (id) => apiClient.get(`/ferias/${id}`),
+    create: (matriculaFuncionario, data) => apiClient.post(`/funcionarios/${matriculaFuncionario}/ferias`, data),
     update: (id, data) => apiClient.put(`/ferias/${id}`, data),
     remove: (id) => apiClient.delete(`/ferias/${id}`),
+    bulkRemove: (ids) => apiClient.delete('/ferias/bulk', { data: { ids } }),
+    distribuir: (data) => apiClient.post('/ferias/distribuir', data),
   },
   
   planejamento: {
-    getAtivo: () => apiClient.get('/ferias?planejamento=ativo'),
-    gerarDistribuicao: (ano, descricao) => apiClient.post('/ferias/distribuir', { ano, descricao }),
     getHistorico: (ano) => apiClient.get('/planejamentos', { params: { ano } }),
     restaurar: (id) => apiClient.put(`/planejamentos/${id}/ativar`),
     getVisaoGeral: (ano, mes, filters) => apiClient.get('/planejamentos/visao-geral', { params: { ano, mes, ...filters } }),
@@ -81,7 +83,6 @@ const api = {
     getAvisoFerias: (feriasId) => apiClient.get(`/relatorios/aviso-ferias/${feriasId}`, { responseType: 'blob' }),
   },
   
-  // NOVO: Módulo completo de Alertas
   alertas: {
     getRetornosProximos: (dias) => apiClient.get('/alertas/retorno-afastamento', { params: { dias } }),
     getNecessitaReprogramacao: (periodo) => apiClient.get('/alertas/necessita-reprogramacao', { params: { periodo } }),

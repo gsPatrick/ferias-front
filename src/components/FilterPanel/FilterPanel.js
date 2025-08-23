@@ -1,45 +1,53 @@
+// src/components/FilterPanel/FilterPanel.js
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import api from '@/services/api';
 import Button from '../Button/Button';
 import styles from './FilterPanel.module.css';
 import { SlidersHorizontal, X } from 'lucide-react';
 
-export default function FilterPanel({ isOpen, onClose, onApplyFilters, initialFilters = {} }) {
-    // Estado local para os dados do formulário de filtro
+// Função para extrair opções únicas de um array de objetos
+const getUniqueOptions = (data, key) => {
+    if (!data || !Array.isArray(data)) return [];
+    const options = new Set(data.map(item => item[key]).filter(Boolean));
+    return Array.from(options).sort((a, b) => String(a).localeCompare(String(b)));
+};
+
+export default function FilterPanel({ isOpen, onClose, onApplyFilters, initialFilters = {}, funcionariosData = [] }) {
     const [formData, setFormData] = useState(initialFilters);
 
-    // Efeito para sincronizar o estado local do formulário com os filtros iniciais (da URL)
+    // Agora extrai as opções dos dados recebidos via props
+    const filterOptions = {
+        status: ['Ativo', 'Inativo'],
+        categorias: getUniqueOptions(funcionariosData, 'categoria'),
+        categorias_trab: getUniqueOptions(funcionariosData, 'categoria_trab'),
+        horarios: getUniqueOptions(funcionariosData, 'horario'),
+        escalas: getUniqueOptions(funcionariosData, 'escala'),
+        siglas_local: getUniqueOptions(funcionariosData, 'sigla_local'),
+        gestoes: getUniqueOptions(funcionariosData, 'des_grupo_contrato'),
+        convencoes: getUniqueOptions(funcionariosData, 'convencao'),
+        // Adicione aqui outros campos que você queira como select
+    };
+
     useEffect(() => {
         setFormData(initialFilters);
     }, [initialFilters]);
 
     const handleChange = (e) => {
-        const { name, value, type, checked } = e.target;
-        setFormData(prev => ({
-            ...prev,
-            [name]: type === 'checkbox' ? checked : value
-        }));
+        const { name, value } = e.target;
+        setFormData(prev => ({ ...prev, [name]: value }));
     };
-
-    // Dados mockados para os selects (em um app real, viriam da API)
-    const mockMunicipios = ['Teresina', 'Parnaíba', 'Floriano', 'Picos', 'Outro'];
-    const mockCategoriasTrabalhador = ['Mensalista', 'Intermitente', 'Horista', 'Terceirizado', 'Outro'];
-    const mockConvencoes = ['1-SEEACEPI', '10-SECAPI INTERIOR', 'SIND.COMERCIARIOS', 'Outra'];
-    const mockStatusContrato = ['Ativo', 'Inativo'];
-    const mockTipoContrato = ['CLT', 'PJ', 'Estágio', 'Temporário'];
-    const mockHorario = ['Integral', 'Meio Período', 'Noturno', 'Flexível'];
-    const mockFiliais = ['Filial 01', 'Filial 02', 'Filial 03']; // Exemplo
-    const mockCargos = ['Analista RH', 'Gerente', 'Assistente Administrativo', 'Desenvolvedor']; // Exemplo
 
     const handleApply = () => {
         onApplyFilters(formData);
+        onClose();
     };
-
+    
     const handleClear = () => {
-        setFormData({}); // Limpa o estado local do formulário
-        onApplyFilters({}); // Notifica o pai para limpar os filtros
+        setFormData({});
+        onApplyFilters({});
         onClose();
     };
 
@@ -47,146 +55,109 @@ export default function FilterPanel({ isOpen, onClose, onApplyFilters, initialFi
         <AnimatePresence>
             {isOpen && (
                 <>
-                    <motion.div 
-                        className={styles.overlay}
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        onClick={onClose}
-                    />
-                    <motion.div
-                        className={styles.panel}
-                        initial={{ x: '100%' }}
-                        animate={{ x: 0 }}
-                        exit={{ x: '100%' }}
-                        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-                    >
+                    <motion.div className={styles.overlay} onClick={onClose} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} />
+                    <motion.div className={styles.panel} initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }} transition={{ type: 'spring', stiffness: 300, damping: 30 }}>
                         <div className={styles.header}>
                             <SlidersHorizontal size={20} />
                             <h3>Filtros Avançados</h3>
                             <button onClick={onClose} className={styles.closeButton}><X size={24}/></button>
                         </div>
                         <div className={styles.content}>
-                            <h4>Dados do Funcionário</h4>
+                            {/* ========================================================== */}
+                            {/* FORMULÁRIO COMPLETO COM TODOS OS CAMPOS DA PLANILHA */}
+                            {/* ========================================================== */}
+                            
+                            <h4>Status e Datas</h4>
                             <div className={styles.formGroup}>
-                                <label htmlFor="status">Status do Contrato</label>
+                                <label htmlFor="status">Status</label>
                                 <select id="status" name="status" value={formData.status || ''} onChange={handleChange}>
                                     <option value="">Todos</option>
-                                    {mockStatusContrato.map(s => <option key={s} value={s}>{s}</option>)}
+                                    {filterOptions.status.map(s => <option key={s} value={s}>{s}</option>)}
                                 </select>
                             </div>
                             <div className={styles.formGroup}>
-                                <label htmlFor="dth_admissao_inicio">Data de Admissão (Início)</label>
+                                <label htmlFor="dth_admissao_inicio">Admissão (a partir de)</label>
                                 <input id="dth_admissao_inicio" name="dth_admissao_inicio" type="date" value={formData.dth_admissao_inicio || ''} onChange={handleChange}/>
                             </div>
                             <div className={styles.formGroup}>
-                                <label htmlFor="dth_admissao_fim">Data de Admissão (Fim)</label>
+                                <label htmlFor="dth_admissao_fim">Admissão (até)</label>
                                 <input id="dth_admissao_fim" name="dth_admissao_fim" type="date" value={formData.dth_admissao_fim || ''} onChange={handleChange}/>
-                            </div>
-                            <div className={styles.formGroup}>
-                                <label htmlFor="salario_base_min">Salário Base (Mínimo)</label>
-                                <input id="salario_base_min" name="salario_base_min" type="number" step="0.01" placeholder="Ex: 1500" value={formData.salario_base_min || ''} onChange={handleChange}/>
-                            </div>
-                            <div className={styles.formGroup}>
-                                <label htmlFor="salario_base_max">Salário Base (Máximo)</label>
-                                <input id="salario_base_max" name="salario_base_max" type="number" step="0.01" placeholder="Ex: 5000" value={formData.salario_base_max || ''} onChange={handleChange}/>
-                            </div>
-                            <div className={styles.formGroup}>
-                                <label htmlFor="contrato_tipo">Tipo de Contrato</label>
-                                <select id="contrato_tipo" name="contrato_tipo" value={formData.contrato_tipo || ''} onChange={handleChange}>
-                                    <option value="">Todos</option>
-                                    {mockTipoContrato.map(t => <option key={t} value={t}>{t}</option>)}
-                                </select>
-                            </div>
-                            <div className={styles.formGroup}>
-                                <label htmlFor="categoria_trabalhador">Categoria do Trabalhador</label>
-                                <select id="categoria_trabalhador" name="categoria_trabalhador" value={formData.categoria_trabalhador || ''} onChange={handleChange}>
-                                    <option value="">Todas</option>
-                                    {mockCategoriasTrabalhador.map(c => <option key={c} value={c}>{c}</option>)}
-                                </select>
-                            </div>
-                            <div className={styles.formGroup}>
-                                <label htmlFor="horario_tipo">Horário de Trabalho</label>
-                                <select id="horario_tipo" name="horario_tipo" value={formData.horario_tipo || ''} onChange={handleChange}>
-                                    <option value="">Todos</option>
-                                    {mockHorario.map(h => <option key={h} value={h}>{h}</option>)}
-                                </select>
-                            </div>
-
-                            <h4>Férias e Períodos</h4>
-                            <div className={styles.formGroup}>
-                                <label htmlFor="dias_para_vencer">Férias Vencendo em (dias)</label>
-                                <input id="dias_para_vencer" name="dias_para_vencer" type="number" placeholder="Ex: 30" value={formData.dias_para_vencer || ''} onChange={handleChange}/>
-                            </div>
-                            <div className={styles.formGroup}>
-                                <label htmlFor="dth_limite_ferias_inicio">Data Limite Férias (Início)</label>
-                                <input id="dth_limite_ferias_inicio" name="dth_limite_ferias_inicio" type="date" value={formData.dth_limite_ferias_inicio || ''} onChange={handleChange}/>
-                            </div>
-                            <div className={styles.formGroup}>
-                                <label htmlFor="dth_limite_ferias_fim">Data Limite Férias (Fim)</label>
-                                <input id="dth_limite_ferias_fim" name="dth_limite_ferias_fim" type="date" value={formData.dth_limite_ferias_fim || ''} onChange={handleChange}/>
-                            </div>
-                            <div className={styles.formGroup}>
-                                <label htmlFor="saldo_dias_ferias_min">Saldo de Dias de Férias (Mínimo)</label>
-                                <input id="saldo_dias_ferias_min" name="saldo_dias_ferias_min" type="number" placeholder="Ex: 15" value={formData.saldo_dias_ferias_min || ''} onChange={handleChange}/>
-                            </div>
-                            <div className={styles.formGroup}>
-                                <label htmlFor="saldo_dias_ferias_max">Saldo de Dias de Férias (Máximo)</label>
-                                <input id="saldo_dias_ferias_max" name="saldo_dias_ferias_max" type="number" placeholder="Ex: 30" value={formData.saldo_dias_ferias_max || ''} onChange={handleChange}/>
-                            </div>
-                            <div className={styles.formGroup}>
-                                <label htmlFor="ultima_ferias_inicio">Últimas Férias (Início Gozo)</label>
-                                <input id="ultima_ferias_inicio" name="ultima_ferias_inicio" type="date" value={formData.ultima_ferias_inicio || ''} onChange={handleChange}/>
-                            </div>
-                            <div className={styles.formGroup}>
-                                <label htmlFor="ultima_ferias_fim">Últimas Férias (Fim Gozo)</label>
-                                <input id="ultima_ferias_fim" name="ultima_ferias_fim" type="date" value={formData.ultima_ferias_fim || ''} onChange={handleChange}/>
-                            </div>
-                             <div className={styles.formGroup}>
-                                <label htmlFor="periodo_aquisitivo_inicio">Período Aquisitivo (Início)</label>
-                                <input id="periodo_aquisitivo_inicio" name="periodo_aquisitivo_inicio" type="date" value={formData.periodo_aquisitivo_inicio || ''} onChange={handleChange}/>
-                            </div>
-                            <div className={styles.formGroup}>
-                                <label htmlFor="periodo_aquisitivo_fim">Período Aquisitivo (Fim)</label>
-                                <input id="periodo_aquisitivo_fim" name="periodo_aquisitivo_fim" type="date" value={formData.periodo_aquisitivo_fim || ''} onChange={handleChange}/>
                             </div>
 
                             <h4>Estrutura Organizacional</h4>
-                            <div className={styles.formGroup}>
-                                <label htmlFor="municipio_local_trabalho">Município do Local de Trabalho</label>
-                                <select id="municipio_local_trabalho" name="municipio_local_trabalho" value={formData.municipio_local_trabalho || ''} onChange={handleChange}>
-                                    <option value="">Todos</option>
-                                    {mockMunicipios.map(m => <option key={m} value={m}>{m}</option>)}
-                                </select>
-                            </div>
-                            <div className={styles.formGroup}>
-                                <label htmlFor="razao_social_filial">Razão Social Filial</label>
-                                <select id="razao_social_filial" name="razao_social_filial" value={formData.razao_social_filial || ''} onChange={handleChange}>
-                                    <option value="">Todas</option>
-                                    {mockFiliais.map(f => <option key={f} value={f}>{f}</option>)}
-                                </select>
-                            </div>
                              <div className={styles.formGroup}>
-                                <label htmlFor="codigo_filial">Código da Filial</label>
-                                <input id="codigo_filial" name="codigo_filial" type="text" placeholder="Ex: FIL001" value={formData.codigo_filial || ''} onChange={handleChange}/>
-                            </div>
-                            <div className={styles.formGroup}>
-                                <label htmlFor="local_de_trabalho_descricao">Local de Trabalho (Descrição)</label>
-                                <input id="local_de_trabalho_descricao" name="local_de_trabalho_descricao" type="text" placeholder="Ex: Escritório Centro" value={formData.local_de_trabalho_descricao || ''} onChange={handleChange}/>
-                            </div>
-                            <div className={styles.formGroup}>
-                                <label htmlFor="categoria_cargo">Categoria/Cargo</label>
-                                <select id="categoria_cargo" name="categoria_cargo" value={formData.categoria_cargo || ''} onChange={handleChange}>
+                                <label htmlFor="des_grupo_contrato">Gestão do Contrato</label>
+                                <select id="des_grupo_contrato" name="des_grupo_contrato" value={formData.des_grupo_contrato || ''} onChange={handleChange}>
                                     <option value="">Todas</option>
-                                    {mockCargos.map(c => <option key={c} value={c}>{c}</option>)}
+                                    {filterOptions.gestoes.map(g => <option key={g} value={g}>{g}</option>)}
+                                </select>
+                            </div>
+                            <div className={styles.formGroup}>
+                                <label htmlFor="municipio_local_trabalho">Município</label>
+                                <input id="municipio_local_trabalho" name="municipio_local_trabalho" type="text" placeholder="Digite para filtrar..." value={formData.municipio_local_trabalho || ''} onChange={handleChange}/>
+                            </div>
+                            <div className={styles.formGroup}>
+                                <label htmlFor="sigla_local">Estado (UF)</label>
+                                <select id="sigla_local" name="sigla_local" value={formData.sigla_local || ''} onChange={handleChange}>
+                                    <option value="">Todos</option>
+                                    {filterOptions.siglas_local.map(s => <option key={s} value={s}>{s}</option>)}
+                                </select>
+                            </div>
+                            {/* Adicionar 'cliente' se for necessário no futuro */}
+
+                            <h4>Cargo e Contrato</h4>
+                            <div className={styles.formGroup}>
+                                <label htmlFor="categoria">Categoria/Cargo</label>
+                                <select id="categoria" name="categoria" value={formData.categoria || ''} onChange={handleChange}>
+                                    <option value="">Todos</option>
+                                    {filterOptions.categorias.map(c => <option key={c} value={c}>{c}</option>)}
+                                </select>
+                            </div>
+                            <div className={styles.formGroup}>
+                                <label htmlFor="categoria_trab">Categoria do Trabalhador</label>
+                                <select id="categoria_trab" name="categoria_trab" value={formData.categoria_trab || ''} onChange={handleChange}>
+                                    <option value="">Todas</option>
+                                    {filterOptions.categorias_trab.map(c => <option key={c} value={c}>{c}</option>)}
                                 </select>
                             </div>
                             <div className={styles.formGroup}>
                                 <label htmlFor="convencao">Convenção Coletiva</label>
                                 <select id="convencao" name="convencao" value={formData.convencao || ''} onChange={handleChange}>
                                     <option value="">Todas</option>
-                                    {mockConvencoes.map(c => <option key={c} value={c}>{c}</option>)}
+                                    {filterOptions.convencoes.map(c => <option key={c} value={c}>{c}</option>)}
                                 </select>
+                            </div>
+                            <div className={styles.formGroup}>
+                                <label htmlFor="escala">Escala</label>
+                                <select id="escala" name="escala" value={formData.escala || ''} onChange={handleChange}>
+                                    <option value="">Todas</option>
+                                    {filterOptions.escalas.map(e => <option key={e} value={e}>{e}</option>)}
+                                </select>
+                            </div>
+                            <div className={styles.formGroup}>
+                                <label htmlFor="horario">Horário</label>
+                                <select id="horario" name="horario" value={formData.horario || ''} onChange={handleChange}>
+                                    <option value="">Todos</option>
+                                    {filterOptions.horarios.map(h => <option key={h} value={h}>{h}</option>)}
+                                </select>
+                            </div>
+
+                            <h4>Dados de Férias</h4>
+                             <div className={styles.formGroup}>
+                                <label htmlFor="dth_limite_ferias_inicio">Data Limite (a partir de)</label>
+                                <input id="dth_limite_ferias_inicio" name="dth_limite_ferias_inicio" type="date" value={formData.dth_limite_ferias_inicio || ''} onChange={handleChange}/>
+                            </div>
+                            <div className={styles.formGroup}>
+                                <label htmlFor="dth_limite_ferias_fim">Data Limite (até)</label>
+                                <input id="dth_limite_ferias_fim" name="dth_limite_ferias_fim" type="date" value={formData.dth_limite_ferias_fim || ''} onChange={handleChange}/>
+                            </div>
+                            <div className={styles.formGroup}>
+                                <label htmlFor="faltas_injustificadas_periodo_min">Qtd. Faltas (Mínimo)</label>
+                                <input id="faltas_injustificadas_periodo_min" name="faltas_injustificadas_periodo_min" type="number" placeholder="Ex: 0" value={formData.faltas_injustificadas_periodo_min || ''} onChange={handleChange}/>
+                            </div>
+                            <div className={styles.formGroup}>
+                                <label htmlFor="faltas_injustificadas_periodo_max">Qtd. Faltas (Máximo)</label>
+                                <input id="faltas_injustificadas_periodo_max" name="faltas_injustificadas_periodo_max" type="number" placeholder="Ex: 5" value={formData.faltas_injustificadas_periodo_max || ''} onChange={handleChange}/>
                             </div>
                         </div>
                         <div className={styles.footer}>

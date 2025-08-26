@@ -61,6 +61,10 @@ const api = {
     remove: (id) => apiClient.delete(`/ferias/${id}`),
     bulkRemove: (ids) => apiClient.delete('/ferias/bulk', { data: { ids } }),
     distribuir: (data) => apiClient.post('/ferias/distribuir', data),
+    // ==========================================================
+    // NOVA FUNÇÃO ADICIONADA AQUI
+    // ==========================================================
+    redistribuirSelecionadas: (data) => apiClient.post('/ferias/redistribuir-selecionados', data),
   },
   
   planejamento: {

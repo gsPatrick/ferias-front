@@ -10,7 +10,7 @@ import Modal from '@/components/Modal/Modal';
 import ActionMenu from '@/components/ActionMenu/ActionMenu';
 import Pagination from '@/components/Pagination/Pagination';
 import styles from './planejamento.module.css';
-import { CalendarClock, Search, Filter, Edit, Trash2, XCircle, PlusCircle, RefreshCw } from 'lucide-react';
+import { CalendarClock, Search, Filter, Edit, Trash2, XCircle, PlusCircle, RefreshCw, Shuffle } from 'lucide-react';
 
 // --- HELPERS E COMPONENTES INTERNOS ---
 
@@ -42,7 +42,7 @@ function PlanejamentoComponent() {
     const [paginationInfo, setPaginationInfo] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [modalState, setModalState] = useState({ type: null, data: null, isOpen: false });
-    const [selectedFerias, setSelectedFerias] = useState([]);
+    const [selectedFerias, setSelectedFerias] = useState([]); // Armazena os IDs das férias selecionadas
     const [selectAll, setSelectAll] = useState(false);
     const [filters, setFilters] = useState({});
     const [searchTerm, setSearchTerm] = useState('');
@@ -52,13 +52,12 @@ function PlanejamentoComponent() {
     const fetchPlannedFerias = useCallback(async (params) => {
         setIsLoading(true);
         try {
-            // ======================================================================
-            // CORREÇÃO CRÍTICA AQUI: Chamando a função correta do api.js
-            // ======================================================================
             const response = await api.ferias.getPlanejamentoAtivo(params); 
-            
             setPlannedFerias(response.data.data || []);
             setPaginationInfo(response.data.pagination);
+            // Limpa a seleção sempre que os dados são recarregados
+            setSelectedFerias([]);
+            setSelectAll(false);
         } catch (error) {
             console.error("Falha ao buscar planejamento:", error);
             setPlannedFerias([]);
@@ -135,6 +134,10 @@ function PlanejamentoComponent() {
         openModal('recalcular');
     };
 
+    const handleRedistribuir = () => {
+        if(selectedFerias.length > 0) openModal('redistribuir');
+    };
+
     const getActionItems = (ferias) => [
         { label: 'Editar Férias', icon: <Edit size={16}/>, onClick: () => openModal('editar', ferias) },
         { label: 'Excluir Férias', icon: <Trash2 size={16}/>, variant: 'danger', onClick: () => openModal('excluir', ferias) },
@@ -166,16 +169,23 @@ function PlanejamentoComponent() {
                     const data = Object.fromEntries(formData.entries());
                     data.ano_planejamento = currentYear;
                     try {
-                        if (isEditing) await api.ferias.update(modalState.data.id, data);
-                        else await api.ferias.create(data);
+                        if (isEditing) {
+                            await api.ferias.update(modalState.data.id, data);
+                        } else {
+                            // Para criar, a matrícula vem do funcionário
+                            data.matricula_funcionario = data.matricula_funcionario; 
+                            await api.ferias.create(data.matricula_funcionario, data);
+                        }
                         closeModal();
                         refreshData();
-                    } catch (error) { alert(`Erro ao ${isEditing ? 'atualizar' : 'criar'} férias.`); }
+                    } catch (error) { 
+                        alert(`Erro ao ${isEditing ? 'atualizar' : 'criar'} férias: ${error.response?.data?.message || error.message}`); 
+                    }
                 };
                 return (
                     <form onSubmit={handleSubmit}>
                         <div className={styles.modalFormGrid}>
-                            <div className={styles.formGroup}><label>Matrícula do Funcionário</label><input name="matricula_funcionario" type="text" defaultValue={modalState.data?.Funcionario.matricula || ''} required disabled={isEditing} /></div>
+                            <div className={styles.formGroup}><label>Matrícula do Funcionário</label><input name="matricula_funcionario" type="text" defaultValue={modalState.data?.Funcionario?.matricula || ''} required disabled={isEditing} /></div>
                             <div className={styles.formGroup}><label>Data de Início</label><input name="data_inicio" type="date" defaultValue={formatDateForInput(modalState.data?.data_inicio)} required /></div>
                             <div className={styles.formGroup}><label>Quantidade de Dias</label><input name="qtd_dias" type="number" defaultValue={modalState.data?.qtd_dias || 30} required min="5" max="30" /></div>
                             <div className={styles.formGroup}><label>Status</label><select name="status" defaultValue={modalState.data?.status || 'Planejada'}><option>Planejada</option><option>Confirmada</option><option>Em Gozo</option></select></div>
@@ -220,7 +230,7 @@ function PlanejamentoComponent() {
                         alert(`Planejamento para ${currentYear} recalculado com sucesso! A página será atualizada.`);
                         closeModal();
                         refreshData();
-                    } catch (error) { alert(`Erro ao recalcular planejamento.`); }
+                    } catch (error) { alert(`Erro ao recalcular planejamento: ${error.response?.data?.message || error.message}`); }
                 };
                 return (
                     <div style={{ textAlign: 'center' }}>
@@ -228,6 +238,57 @@ function PlanejamentoComponent() {
                         <p style={{color: '#ef4444', fontSize: '0.9rem', marginTop: '1rem'}}>Atenção: O planejamento ativo atual será arquivado e um novo será gerado. Alterações manuais serão perdidas.</p>
                         <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', marginTop: '2rem' }}><Button variant="secondary" onClick={closeModal}>Cancelar</Button><Button variant="primary" onClick={handleConfirmRecalcular}>Sim, Recalcular</Button></div>
                     </div>
+                );
+            case 'redistribuir':
+                const handleConfirmRedistribute = async (e) => {
+                    e.preventDefault();
+                    const formData = new FormData(e.target);
+                    const data = Object.fromEntries(formData.entries());
+
+                    const matriculasSelecionadas = plannedFerias
+                        .filter(f => selectedFerias.includes(f.id))
+                        .map(f => f.Funcionario.matricula);
+                    
+                    const payload = {
+                        ...data,
+                        matriculas: [...new Set(matriculasSelecionadas)] // Garante matrículas únicas
+                    };
+
+                    try {
+                        await api.ferias.redistribuirSelecionadas(payload);
+                        alert('Férias selecionadas foram redistribuídas com sucesso!');
+                        closeModal();
+                        setSelectedFerias([]);
+                        refreshData();
+                    } catch (error) {
+                        alert(error.response?.data?.message || 'Erro ao redistribuir férias.');
+                    }
+                };
+                return (
+                    <form onSubmit={handleConfirmRedistribute}>
+                        <p style={{marginBottom: '1.5rem', lineHeight: '1.6'}}>
+                            Você está redistribuindo as férias para <strong>{selectedFerias.length}</strong> funcionários selecionados. 
+                            Defina o novo período para a alocação automática.
+                        </p>
+                        <div className={styles.modalFormGrid}>
+                            <div className={styles.formGroup}>
+                                <label>Distribuir a partir de:</label>
+                                <input name="dataInicio" type="date" required />
+                            </div>
+                            <div className={styles.formGroup}>
+                                <label>Até a data de (opcional):</label>
+                                <input name="dataFim" type="date" />
+                            </div>
+                            <div className={styles.formGroup} style={{gridColumn: '1 / -1'}}>
+                                <label>Observação</label>
+                                <textarea name="descricao" rows="3" placeholder="Ex: Redistribuição para o cliente FMS"></textarea>
+                            </div>
+                        </div>
+                        <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end', marginTop: '2rem' }}>
+                            <Button type="button" variant="secondary" onClick={closeModal}>Cancelar</Button>
+                            <Button type="submit">Confirmar Redistribuição</Button>
+                        </div>
+                    </form>
                 );
             default: return null;
         }
@@ -240,6 +301,7 @@ function PlanejamentoComponent() {
             case 'excluir': return 'Excluir Férias';
             case 'bulkDelete': return 'Excluir Férias Selecionadas';
             case 'recalcular': return 'Confirmar Recálculo do Planejamento';
+            case 'redistribuir': return 'Redistribuir Férias Selecionadas';
             default: return 'Modal';
         }
     };
@@ -254,9 +316,10 @@ function PlanejamentoComponent() {
                         <option>2025</option><option>2024</option><option>2023</option>
                     </select>
                 </div>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
                     <Button variant="secondary" icon={<Filter size={16} />} onClick={() => setShowFilters(p => !p)}>{showFilters ? 'Ocultar' : 'Mostrar'} Filtros</Button>
-                    <Button variant="secondary" icon={<RefreshCw size={16} />} onClick={handleRecalcular}>Recalcular</Button>
+                    <Button variant="secondary" icon={<RefreshCw size={16} />} onClick={handleRecalcular}>Recalcular Ano</Button>
+                    {selectedFerias.length > 0 && (<Button variant="secondary" icon={<Shuffle size={16}/>} onClick={handleRedistribuir}>Redistribuir ({selectedFerias.length})</Button>)}
                     {selectedFerias.length > 0 && (<Button variant="danger" icon={<Trash2 size={16} />} onClick={handleBulkDelete}>Excluir ({selectedFerias.length})</Button>)}
                     <Button icon={<PlusCircle size={16} />} onClick={() => openModal('criar')}>Planejar Férias</Button>
                 </div>

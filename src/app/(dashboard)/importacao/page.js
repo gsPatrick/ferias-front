@@ -3,7 +3,7 @@
 
 import { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { apiClient } from '@/services/api';
+import api from '@/services/api';
 import styles from './page.module.css';
 import Button from '@/components/Button/Button';
 import { 
@@ -20,7 +20,10 @@ export default function ImportacaoPage() {
     const [status, setStatus] = useState('idle');
     const [message, setMessage] = useState('');
     const [uploadProgress, setUploadProgress] = useState(0);
-    const [anoDistribuicao, setAnoDistribuicao] = useState(new Date().getFullYear());
+    
+    // Estados para o período de distribuição
+    const [dataInicioDist, setDataInicioDist] = useState('');
+    const [dataFimDist, setDataFimDist] = useState('');
 
     const onDrop = useCallback(acceptedFiles => {
         if (acceptedFiles.length > 0) {
@@ -52,14 +55,17 @@ export default function ImportacaoPage() {
 
         const formData = new FormData();
         formData.append('file', file);
-        formData.append('ano', anoDistribuicao);
+        
+        // Adiciona as datas ao FormData se elas estiverem preenchidas
+        if (dataInicioDist) {
+            formData.append('data_inicio_distribuicao', dataInicioDist);
+        }
+        if (dataFimDist) {
+            formData.append('data_fim_distribuicao', dataFimDist);
+        }
 
         try {
-            const response = await apiClient.post('/funcionarios/import', formData, {
-                headers: {
-                    'Content-Type': 'multipart/form-data',
-                }
-            });
+            const response = await api.funcionarios.importPlanilha(formData);
             
             clearInterval(progressInterval);
             setUploadProgress(100);
@@ -83,6 +89,8 @@ export default function ImportacaoPage() {
         setStatus('idle');
         setMessage('');
         setUploadProgress(0);
+        setDataInicioDist('');
+        setDataFimDist('');
     };
     
     const renderStatus = () => {
@@ -153,17 +161,30 @@ export default function ImportacaoPage() {
                     
                     {file && status !== 'uploading' && status !== 'success' && (
                         <div className={styles.optionsSection}>
-                            <label htmlFor="anoDistribuicao">Gerar Planejamento para o ano de:</label>
-                            <select 
-                                id="anoDistribuicao" 
-                                value={anoDistribuicao} 
-                                onChange={(e) => setAnoDistribuicao(e.target.value)}
-                                className={styles.selectAno}
-                            >
-                                <option value={new Date().getFullYear() + 1}>{new Date().getFullYear() + 1}</option>
-                                <option value={new Date().getFullYear()}>{new Date().getFullYear()}</option>
-                                <option value={new Date().getFullYear() - 1}>{new Date().getFullYear() - 1}</option>
-                            </select>
+                            <h4>Período para Distribuição de Férias</h4>
+                            <p>Defina o intervalo de datas para a alocação automática. Se deixado em branco, o sistema usará o ano corrente e a data limite de cada funcionário.</p>
+                            <div className={styles.dateInputs}>
+                                <div className={styles.formGroup}>
+                                    <label htmlFor="dataInicioDist">Distribuir a partir de:</label>
+                                    <input 
+                                        id="dataInicioDist" 
+                                        type="date"
+                                        value={dataInicioDist}
+                                        onChange={(e) => setDataInicioDist(e.target.value)}
+                                        className={styles.dateInput}
+                                    />
+                                </div>
+                                <div className={styles.formGroup}>
+                                    <label htmlFor="dataFimDist">Até a data de:</label>
+                                    <input 
+                                        id="dataFimDist" 
+                                        type="date"
+                                        value={dataFimDist}
+                                        onChange={(e) => setDataFimDist(e.target.value)}
+                                        className={styles.dateInput}
+                                    />
+                                </div>
+                            </div>
                         </div>
                     )}
 

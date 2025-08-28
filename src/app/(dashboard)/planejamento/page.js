@@ -1,8 +1,8 @@
 // src/app/(dashboard)/planejamento/page.js
 'use client'; 
 
-import { useState, useEffect, useCallback, Suspense } from 'react';
-import { useSearchParams, useRouter, usePathname } from 'next/navigation';
+import { useState, useEffect, useCallback, Suspense, useMemo } from 'react';
+import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import api from '@/services/api';
 import Button from '@/components/Button/Button';
@@ -10,7 +10,7 @@ import Modal from '@/components/Modal/Modal';
 import ActionMenu from '@/components/ActionMenu/ActionMenu';
 import Pagination from '@/components/Pagination/Pagination';
 import styles from './planejamento.module.css';
-import { CalendarClock, Search, Filter, Edit, Trash2, XCircle, PlusCircle, RefreshCw, Shuffle } from 'lucide-react';
+import { CalendarClock, Search, Filter, Edit, Trash2, XCircle, PlusCircle, RefreshCw, Shuffle, Users } from 'lucide-react';
 
 // --- HELPERS E COMPONENTES INTERNOS ---
 
@@ -31,91 +31,126 @@ const StatusBadge = ({ status }) => {
     return <span className={`${styles.statusBadge} ${statusClass}`}>{status}</span>;
 };
 
+const getUniqueOptions = (data, key) => {
+    if (!data || !Array.isArray(data)) return [];
+    const getNestedValue = (obj, path) => path.split('.').reduce((acc, part) => acc && acc[part], obj);
+    const options = new Set(data.map(item => getNestedValue(item, key)).filter(Boolean));
+    return Array.from(options).sort((a, b) => String(a).localeCompare(String(b)));
+};
+
 // --- COMPONENTE PRINCIPAL ---
 
 function PlanejamentoComponent() {
     const router = useRouter();
-    const searchParams = useSearchParams();
     const pathname = usePathname();
 
-    const [plannedFerias, setPlannedFerias] = useState([]);
-    const [paginationInfo, setPaginationInfo] = useState(null);
+    const [allPlannedFerias, setAllPlannedFerias] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [modalState, setModalState] = useState({ type: null, data: null, isOpen: false });
-    const [selectedFerias, setSelectedFerias] = useState([]); // Armazena os IDs das férias selecionadas
+    const [selectedFerias, setSelectedFerias] = useState([]);
     const [selectAll, setSelectAll] = useState(false);
+    
     const [filters, setFilters] = useState({});
     const [searchTerm, setSearchTerm] = useState('');
+    const [currentPage, setCurrentPage] = useState(1);
     const [showFilters, setShowFilters] = useState(true);
     const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
+    const itemsPerPage = 20;
 
-    const fetchPlannedFerias = useCallback(async (params) => {
+    const fetchAllPlannedFerias = useCallback(async (year) => {
         setIsLoading(true);
         try {
-            const response = await api.ferias.getPlanejamentoAtivo(params); 
-            setPlannedFerias(response.data.data || []);
-            setPaginationInfo(response.data.pagination);
-            // Limpa a seleção sempre que os dados são recarregados
-            setSelectedFerias([]);
-            setSelectAll(false);
+            const response = await api.ferias.getPlanejamentoAtivo({ ano: year, limit: 10000 }); 
+            setAllPlannedFerias(response.data.data || []);
         } catch (error) {
             console.error("Falha ao buscar planejamento:", error);
-            setPlannedFerias([]);
+            setAllPlannedFerias([]);
         } finally {
             setIsLoading(false);
         }
     }, []);
 
     useEffect(() => {
-        const currentParams = Object.fromEntries(searchParams.entries());
-        const year = parseInt(currentParams.ano, 10) || new Date().getFullYear();
-        setCurrentYear(year);
-        fetchPlannedFerias({ ...currentParams, ano: year });
-        
-        const urlFilters = { ...currentParams };
-        delete urlFilters.page; delete urlFilters.limit; delete urlFilters.ano;
-        setSearchTerm(urlFilters.q || '');
-        delete urlFilters.q;
-        setFilters(urlFilters);
-    }, [searchParams, fetchPlannedFerias]);
+        fetchAllPlannedFerias(currentYear);
+    }, [currentYear, fetchAllPlannedFerias]);
 
-    const updateUrlParams = (newParams) => {
-        const current = new URLSearchParams(Array.from(searchParams.entries()));
-        Object.entries(newParams).forEach(([key, value]) => {
-            if (value) current.set(key, value);
-            else current.delete(key);
+    const feriasFiltradas = useMemo(() => {
+        if (!allPlannedFerias.length) return [];
+        
+        const lowercasedSearchTerm = searchTerm.toLowerCase();
+        
+        return allPlannedFerias.filter(feria => {
+            const func = feria.Funcionario || {};
+
+            const searchMatch = lowercasedSearchTerm ? (
+                (func.nome_funcionario?.toLowerCase().includes(lowercasedSearchTerm) || false) ||
+                (String(func.matricula || '').toLowerCase().includes(lowercasedSearchTerm))
+            ) : true;
+
+            const filtersMatch = Object.entries(filters).every(([key, value]) => {
+                if (!value) return true;
+                
+                let itemValue;
+                if (key.startsWith('Funcionario.')) {
+                    itemValue = func[key.split('.')[1]];
+                } else {
+                    itemValue = feria[key];
+                }
+
+                if (itemValue === null || itemValue === undefined) return false;
+                return String(itemValue).toLowerCase() === value.toLowerCase();
+            });
+
+            return searchMatch && filtersMatch;
         });
-        current.set('page', '1');
-        router.push(`${pathname}?${current.toString()}`);
+    }, [allPlannedFerias, searchTerm, filters]);
+
+    const paginatedData = useMemo(() => {
+        const startIndex = (currentPage - 1) * itemsPerPage;
+        return feriasFiltradas.slice(startIndex, startIndex + itemsPerPage);
+    }, [feriasFiltradas, currentPage]);
+
+    const paginationInfo = {
+        currentPage: currentPage,
+        totalPages: Math.ceil(feriasFiltradas.length / itemsPerPage),
+        totalItems: feriasFiltradas.length
     };
     
+    const filterOptions = useMemo(() => ({
+        municipios: getUniqueOptions(allPlannedFerias, 'Funcionario.municipio_local_trabalho'),
+        gestoes: getUniqueOptions(allPlannedFerias, 'Funcionario.des_grupo_contrato'),
+        categorias: getUniqueOptions(allPlannedFerias, 'Funcionario.categoria'),
+        estados: getUniqueOptions(allPlannedFerias, 'Funcionario.sigla_local'),
+        escalas: getUniqueOptions(allPlannedFerias, 'Funcionario.escala'),
+    }), [allPlannedFerias]);
+
     const handleFilterChange = (name, value) => {
-        const newFilters = { ...filters, [name]: value };
-        setFilters(newFilters);
-        updateUrlParams({ ...newFilters, q: searchTerm, ano: currentYear });
+        setFilters(prev => ({ ...prev, [name]: value }));
+        setCurrentPage(1);
     };
 
     const handleSearchChange = (e) => {
-        const newSearchTerm = e.target.value;
-        setSearchTerm(newSearchTerm);
-        updateUrlParams({ ...filters, q: newSearchTerm, ano: currentYear });
+        setSearchTerm(e.target.value);
+        setCurrentPage(1);
     };
     
     const handleYearChange = (e) => {
         const newYear = e.target.value;
         setCurrentYear(newYear);
-        updateUrlParams({ ...filters, q: searchTerm, ano: newYear });
+        setFilters({});
+        setSearchTerm('');
+        setCurrentPage(1);
     };
 
     const handleClearFilters = () => {
         setFilters({});
         setSearchTerm('');
-        updateUrlParams({ ano: currentYear });
+        setCurrentPage(1);
     };
 
     const handleSelectAll = (checked) => {
         setSelectAll(checked);
-        setSelectedFerias(checked ? plannedFerias.map(f => f.id) : []);
+        setSelectedFerias(checked ? paginatedData.map(f => f.id) : []);
     };
 
     const handleSelectFerias = (id, checked) => {
@@ -133,7 +168,7 @@ function PlanejamentoComponent() {
     const handleRecalcular = () => {
         openModal('recalcular');
     };
-
+    
     const handleRedistribuir = () => {
         if(selectedFerias.length > 0) openModal('redistribuir');
     };
@@ -151,14 +186,15 @@ function PlanejamentoComponent() {
         { header: 'Início Férias', accessor: 'data_inicio' },
         { header: 'Fim Férias', accessor: 'data_fim' },
         { header: 'Dias', accessor: 'qtd_dias' },
-        { header: 'Categoria/Cargo', accessor: 'Funcionario.categoria' }, 
-        { header: 'Gestão Contrato', accessor: 'Funcionario.des_grupo_contrato' },
+        { header: 'Categoria', accessor: 'Funcionario.categoria' }, 
+        { header: 'Contrato', accessor: 'Funcionario.des_grupo_contrato' },
         { header: 'Município', accessor: 'Funcionario.municipio_local_trabalho' },
         { header: 'Status Funcionário', accessor: 'Funcionario.status' },
+        { header: 'Substituição?', accessor: 'necessidade_substituicao' }
     ];
 
     const renderModalContent = () => {
-        const refreshData = () => fetchPlannedFerias(Object.fromEntries(searchParams.entries()));
+        const refreshData = () => fetchAllPlannedFerias(currentYear);
         switch (modalState.type) {
             case 'criar':
             case 'editar':
@@ -168,28 +204,23 @@ function PlanejamentoComponent() {
                     const formData = new FormData(e.target);
                     const data = Object.fromEntries(formData.entries());
                     data.ano_planejamento = currentYear;
+                    data.necessidade_substituicao = e.target.necessidade_substituicao.checked;
                     try {
-                        if (isEditing) {
-                            await api.ferias.update(modalState.data.id, data);
-                        } else {
-                            // Para criar, a matrícula vem do funcionário
-                            data.matricula_funcionario = data.matricula_funcionario; 
-                            await api.ferias.create(data.matricula_funcionario, data);
-                        }
+                        if (isEditing) await api.ferias.update(modalState.data.id, data);
+                        else await api.ferias.create(data.matricula_funcionario, data);
                         closeModal();
                         refreshData();
-                    } catch (error) { 
-                        alert(`Erro ao ${isEditing ? 'atualizar' : 'criar'} férias: ${error.response?.data?.message || error.message}`); 
-                    }
+                    } catch (error) { alert(`Erro ao ${isEditing ? 'atualizar' : 'criar'} férias.`); }
                 };
                 return (
                     <form onSubmit={handleSubmit}>
                         <div className={styles.modalFormGrid}>
-                            <div className={styles.formGroup}><label>Matrícula do Funcionário</label><input name="matricula_funcionario" type="text" defaultValue={modalState.data?.Funcionario?.matricula || ''} required disabled={isEditing} /></div>
+                            <div className={styles.formGroup}><label>Matrícula do Funcionário</label><input name="matricula_funcionario" type="text" defaultValue={modalState.data?.Funcionario.matricula || ''} required disabled={isEditing} /></div>
                             <div className={styles.formGroup}><label>Data de Início</label><input name="data_inicio" type="date" defaultValue={formatDateForInput(modalState.data?.data_inicio)} required /></div>
                             <div className={styles.formGroup}><label>Quantidade de Dias</label><input name="qtd_dias" type="number" defaultValue={modalState.data?.qtd_dias || 30} required min="5" max="30" /></div>
                             <div className={styles.formGroup}><label>Status</label><select name="status" defaultValue={modalState.data?.status || 'Planejada'}><option>Planejada</option><option>Confirmada</option><option>Em Gozo</option></select></div>
                             <div className={styles.formGroup} style={{gridColumn: '1 / -1'}}><label>Observações</label><textarea name="observacao" rows="3" defaultValue={modalState.data?.observacao || ''}></textarea></div>
+                            <div className={styles.formGroup} style={{gridColumn: '1 / -1'}}><label><input name="necessidade_substituicao" type="checkbox" defaultChecked={modalState.data?.necessidade_substituicao || false} /> Necessita de Substituição?</label></div>
                         </div>
                         <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end', marginTop: '2rem' }}><Button type="button" variant="secondary" onClick={closeModal}>Cancelar</Button><Button type="submit">Salvar</Button></div>
                     </form>
@@ -230,7 +261,7 @@ function PlanejamentoComponent() {
                         alert(`Planejamento para ${currentYear} recalculado com sucesso! A página será atualizada.`);
                         closeModal();
                         refreshData();
-                    } catch (error) { alert(`Erro ao recalcular planejamento: ${error.response?.data?.message || error.message}`); }
+                    } catch (error) { alert(`Erro ao recalcular planejamento.`); }
                 };
                 return (
                     <div style={{ textAlign: 'center' }}>
@@ -245,13 +276,13 @@ function PlanejamentoComponent() {
                     const formData = new FormData(e.target);
                     const data = Object.fromEntries(formData.entries());
 
-                    const matriculasSelecionadas = plannedFerias
+                    const matriculasSelecionadas = allPlannedFerias
                         .filter(f => selectedFerias.includes(f.id))
                         .map(f => f.Funcionario.matricula);
                     
                     const payload = {
                         ...data,
-                        matriculas: [...new Set(matriculasSelecionadas)] // Garante matrículas únicas
+                        matriculas: [...new Set(matriculasSelecionadas)]
                     };
 
                     try {
@@ -266,34 +297,22 @@ function PlanejamentoComponent() {
                 };
                 return (
                     <form onSubmit={handleConfirmRedistribute}>
-                        <p style={{marginBottom: '1.5rem', lineHeight: '1.6'}}>
-                            Você está redistribuindo as férias para <strong>{selectedFerias.length}</strong> funcionários selecionados. 
-                            Defina o novo período para a alocação automática.
-                        </p>
+                        <p style={{marginBottom: '1.5rem', lineHeight: '1.6'}}>Você está redistribuindo as férias para <strong>{selectedFerias.length}</strong> funcionários selecionados. Defina o novo período para a alocação automática.</p>
                         <div className={styles.modalFormGrid}>
-                            <div className={styles.formGroup}>
-                                <label>Distribuir a partir de:</label>
-                                <input name="dataInicio" type="date" required />
-                            </div>
-                            <div className={styles.formGroup}>
-                                <label>Até a data de (opcional):</label>
-                                <input name="dataFim" type="date" />
-                            </div>
-                            <div className={styles.formGroup} style={{gridColumn: '1 / -1'}}>
-                                <label>Observação</label>
-                                <textarea name="descricao" rows="3" placeholder="Ex: Redistribuição para o cliente FMS"></textarea>
-                            </div>
+                            <div className={styles.formGroup}><label>Distribuir a partir de:</label><input name="dataInicio" type="date" required /></div>
+                            <div className={styles.formGroup}><label>Até a data de (opcional):</label><input name="dataFim" type="date" /></div>
+                            <div className={styles.formGroup} style={{gridColumn: '1 / -1'}}><label>Observação</label><textarea name="descricao" rows="3" placeholder="Ex: Redistribuição para o cliente FMS"></textarea></div>
                         </div>
-                        <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end', marginTop: '2rem' }}>
-                            <Button type="button" variant="secondary" onClick={closeModal}>Cancelar</Button>
-                            <Button type="submit">Confirmar Redistribuição</Button>
-                        </div>
+                        <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end', marginTop: '2rem' }}><Button type="button" variant="secondary" onClick={closeModal}>Cancelar</Button><Button type="submit">Confirmar Redistribuição</Button></div>
                     </form>
                 );
             default: return null;
         }
     };
     
+    // ==========================================================
+    // FUNÇÃO FALTANTE ADICIONADA AQUI
+    // ==========================================================
     const getModalTitle = () => {
         switch (modalState.type) {
             case 'criar': return 'Planejar Novas Férias';
@@ -328,14 +347,13 @@ function PlanejamentoComponent() {
             {showFilters && (
                 <div className={styles.filterGrid}>
                     <div className={`${styles.formGroup} ${styles.searchGroup}`}><label htmlFor="q">Busca Rápida</label><div className={styles.inputIconWrapper}><Search size={18} className={styles.inputIcon} /><input id="q" name="q" type="text" placeholder="Nome ou matrícula..." value={searchTerm} onChange={handleSearchChange} /></div></div>
-                    <div className={styles.formGroup}><label htmlFor="status">Status Funcionário</label><select id="status" name="status" value={filters.status || ''} onChange={e => handleFilterChange('status', e.target.value)}><option value="">Todos</option><option value="Ativo">Ativo</option><option value="Inativo">Inativo</option></select></div>
-                    <div className={styles.formGroup}><label htmlFor="categoria">Categoria/Cargo</label><input id="categoria" name="categoria" type="text" placeholder="Filtrar por cargo" value={filters.categoria || ''} onChange={e => handleFilterChange('categoria', e.target.value)} /></div>
-                    <div className={styles.formGroup}><label htmlFor="des_grupo_contrato">Gestão Contrato</label><input id="des_grupo_contrato" name="des_grupo_contrato" type="text" placeholder="Filtrar gestão" value={filters.des_grupo_contrato || ''} onChange={e => handleFilterChange('des_grupo_contrato', e.target.value)} /></div>
-                    <div className={styles.formGroup}><label htmlFor="municipio_local_trabalho">Município</label><input id="municipio_local_trabalho" name="municipio_local_trabalho" type="text" placeholder="Filtrar município" value={filters.municipio_local_trabalho || ''} onChange={e => handleFilterChange('municipio_local_trabalho', e.target.value)} /></div>
                     
-                    <div className={styles.formGroup}><label htmlFor="status_ferias">Status das Férias</label><select id="status_ferias" name="status_ferias" value={filters.status_ferias || ''} onChange={e => handleFilterChange('status_ferias', e.target.value)}><option value="">Todos</option><option>Planejada</option><option>Confirmada</option><option>Em Gozo</option></select></div>
-                    <div className={styles.formGroup}><label htmlFor="ferias_inicio_de">Início Férias (de)</label><input id="ferias_inicio_de" name="ferias_inicio_de" type="date" value={filters.ferias_inicio_de || ''} onChange={e => handleFilterChange('ferias_inicio_de', e.target.value)} /></div>
-                    <div className={styles.formGroup}><label htmlFor="ferias_inicio_ate">Início Férias (até)</label><input id="ferias_inicio_ate" name="ferias_inicio_ate" type="date" value={filters.ferias_inicio_ate || ''} onChange={e => handleFilterChange('ferias_inicio_ate', e.target.value)} /></div>
+                    <div className={styles.formGroup}><label htmlFor="municipio">Município</label><select id="municipio" name="Funcionario.municipio_local_trabalho" value={filters['Funcionario.municipio_local_trabalho'] || ''} onChange={e => handleFilterChange(e.target.name, e.target.value)}><option value="">Todos</option>{filterOptions.municipios.map(o => <option key={o} value={o}>{o}</option>)}</select></div>
+                    <div className={styles.formGroup}><label htmlFor="gestao">Gestão Contrato</label><select id="gestao" name="Funcionario.des_grupo_contrato" value={filters['Funcionario.des_grupo_contrato'] || ''} onChange={e => handleFilterChange(e.target.name, e.target.value)}><option value="">Todas</option>{filterOptions.gestoes.map(o => <option key={o} value={o}>{o}</option>)}</select></div>
+                    <div className={styles.formGroup}><label htmlFor="categoria">Categoria/Cargo</label><select id="categoria" name="Funcionario.categoria" value={filters['Funcionario.categoria'] || ''} onChange={e => handleFilterChange(e.target.name, e.target.value)}><option value="">Todas</option>{filterOptions.categorias.map(o => <option key={o} value={o}>{o}</option>)}</select></div>
+                    <div className={styles.formGroup}><label htmlFor="estado">Estado (UF)</label><select id="estado" name="Funcionario.sigla_local" value={filters['Funcionario.sigla_local'] || ''} onChange={e => handleFilterChange(e.target.name, e.target.value)}><option value="">Todos</option>{filterOptions.estados.map(o => <option key={o} value={o}>{o}</option>)}</select></div>
+                    <div className={styles.formGroup}><label htmlFor="escala">Escala</label><select id="escala" name="Funcionario.escala" value={filters['Funcionario.escala'] || ''} onChange={e => handleFilterChange(e.target.name, e.target.value)}><option value="">Todas</option>{filterOptions.escalas.map(o => <option key={o} value={o}>{o}</option>)}</select></div>
+                    
                     <div className={styles.filterActions}><Button variant="secondary" onClick={handleClearFilters} icon={<XCircle size={16}/>}>Limpar Filtros</Button></div>
                 </div>
             )}
@@ -345,8 +363,8 @@ function PlanejamentoComponent() {
                     <thead><tr><th className={`${styles.stickyColumn} ${styles.checkboxCell}`}><input type="checkbox" checked={selectAll} onChange={(e) => handleSelectAll(e.target.checked)} /></th>{columns.map(col => (<th key={col.accessor} className={col.sticky ? styles.stickyColumn : ''}>{col.header}</th>))}</tr></thead>
                     <tbody>
                         {isLoading ? (<tr><td colSpan={columns.length + 1} className={styles.loading}>Carregando...</td></tr>) 
-                        : plannedFerias.length === 0 ? (<tr><td colSpan={columns.length + 1} className={styles.noData}>Nenhum registro de férias encontrado para o planejamento ativo deste ano.</td></tr>) 
-                        : (plannedFerias.map(row => {
+                        : paginatedData.length === 0 ? (<tr><td colSpan={columns.length + 1} className={styles.noData}>Nenhum registro de férias encontrado para os filtros aplicados.</td></tr>) 
+                        : (paginatedData.map(row => {
                                 const isSelected = selectedFerias.includes(row.id);
                                 return (
                                     <tr key={row.id} className={isSelected ? styles.selectedRow : ''}>
@@ -356,8 +374,10 @@ function PlanejamentoComponent() {
                                         <td><Link href={`/funcionarios/${row.Funcionario.matricula}`} className={styles.nomeLink}>{row.Funcionario.nome_funcionario}</Link></td>
                                         <td><StatusBadge status={row.status} /></td>
                                         <td>{formatDateForDisplay(row.data_inicio)}</td><td>{formatDateForDisplay(row.data_fim)}</td><td>{row.qtd_dias}</td>
-                                        <td>{row.Funcionario.categoria || '---'}</td><td>{row.Funcionario.des_grupo_contrato || '---'}</td>
+                                        <td>{row.Funcionario.categoria || '---'}</td>
+                                        <td>{row.Funcionario.des_grupo_contrato || '---'}</td>
                                         <td>{row.Funcionario.municipio_local_trabalho || '---'}</td><td><StatusBadge status={row.Funcionario.status} /></td>
+                                        <td>{row.necessidade_substituicao ? 'Sim' : 'Não'}</td>
                                     </tr>
                                 );
                             }))}
@@ -365,7 +385,7 @@ function PlanejamentoComponent() {
                 </table>
             </div>
 
-            {paginationInfo && paginationInfo.totalPages > 1 && (<Pagination pagination={paginationInfo} onPageChange={(page) => updateUrlParams({ ...filters, q: searchTerm, ano: currentYear, page })} />)}
+            {paginationInfo && paginationInfo.totalPages > 1 && (<Pagination pagination={paginationInfo} onPageChange={setCurrentPage} />)}
             
             <Modal isOpen={modalState.isOpen} onClose={closeModal} title={getModalTitle()}>{renderModalContent()}</Modal>
         </div>

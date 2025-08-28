@@ -4,82 +4,21 @@
     display: flex;
     flex-direction: column;
     gap: 3rem;
-    padding: 2rem 0;
+    padding: 2rem;
     max-width: 1200px;
     margin: 0 auto;
 }
 
-/* Hero Section */
-.hero {
-    text-align: center;
-    padding: 3rem 0;
-    position: relative;
-}
-
-.heroIcon {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 100px;
-    height: 100px;
-    background: linear-gradient(135deg, var(--cor-primaria-medio), var(--cor-primaria-claro));
-    border-radius: 50%;
-    margin-bottom: 2rem;
-    box-shadow: 0 20px 40px rgba(59, 130, 246, 0.2);
-    color: white;
-    animation: float 3s ease-in-out infinite;
-}
-
-@keyframes float {
-    0%, 100% { transform: translateY(0px); }
-    50% { transform: translateY(-10px); }
-}
-
-.heroTitle {
-    font-size: 3rem;
-    font-weight: 700;
-    color: var(--cor-texto-principal);
-    margin-bottom: 1rem;
-    background: linear-gradient(135deg, var(--cor-texto-principal), var(--cor-primaria-medio));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-}
-
-.heroSubtitle {
-    font-size: 1.25rem;
-    color: var(--cor-cinza-medio);
-    max-width: 600px;
-    margin: 0 auto 3rem;
-    line-height: 1.6;
-}
-
-.heroStats {
-    display: flex;
-    justify-content: center;
-    gap: 3rem;
-    flex-wrap: wrap;
-}
-
-.stat {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    color: var(--cor-primaria-medio);
-    font-weight: 500;
-    font-size: 0.95rem;
-}
-
-/* Upload Section */
 .uploadSection {
     display: flex;
     justify-content: center;
+    padding-top: 2rem;
 }
 
 .uploadCard {
     background: white;
     border-radius: 24px;
-    padding: 3rem;
+    padding: 2rem;
     box-shadow: 
         0 20px 25px -5px rgba(0, 0, 0, 0.04),
         0 10px 10px -5px rgba(0, 0, 0, 0.04);
@@ -103,7 +42,7 @@
 .dropzone {
     border: 3px dashed #E5E7EB;
     border-radius: 16px;
-    padding: 4rem 2rem;
+    padding: 3rem 1.5rem;
     text-align: center;
     cursor: pointer;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -154,30 +93,6 @@
     filter: drop-shadow(0 4px 8px rgba(59, 130, 246, 0.2));
 }
 
-.iconPulse {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 100px;
-    height: 100px;
-    border: 2px solid var(--cor-primaria-medio);
-    border-radius: 50%;
-    opacity: 0;
-    animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-    0% {
-        transform: translate(-50%, -50%) scale(0.8);
-        opacity: 1;
-    }
-    100% {
-        transform: translate(-50%, -50%) scale(1.5);
-        opacity: 0;
-    }
-}
-
 .dropzoneText h3 {
     font-size: 1.5rem;
     font-weight: 600;
@@ -197,7 +112,7 @@
 }
 
 .fileTypes {
-    display: flex;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
@@ -206,10 +121,8 @@
     background: rgba(243, 244, 246, 0.8);
     padding: 0.75rem 1.5rem;
     border-radius: 50px;
-    display: inline-flex;
 }
 
-/* File Preview */
 .filePreview {
     display: flex;
     align-items: center;
@@ -236,6 +149,7 @@
 
 .fileInfo {
     flex-grow: 1;
+    min-width: 0;
 }
 
 .fileInfo h4 {
@@ -243,6 +157,9 @@
     font-weight: 600;
     color: var(--cor-texto-principal);
     margin-bottom: 0.25rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .fileInfo p {
@@ -276,7 +193,66 @@
     cursor: not-allowed;
 }
 
-/* Status Messages */
+/* ========================================================== */
+/* NOVOS ESTILOS PARA A SEÇÃO DE OPÇÕES (PONTO #1) */
+/* ========================================================== */
+.optionsSection {
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #e5e7eb;
+}
+
+.optionsSection h4 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--cor-texto-principal);
+    margin-bottom: 0.5rem;
+}
+
+.optionsSection p {
+    font-size: 0.9rem;
+    color: var(--cor-cinza-medio);
+    line-height: 1.5;
+    margin-bottom: 1.5rem;
+}
+
+.dateInputs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+}
+
+.formGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.formGroup label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--cor-primaria-profundo);
+}
+
+.dateInput {
+    padding: 0.75rem 1rem;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    background-color: var(--cor-branco);
+    transition: all 0.2s ease;
+}
+
+.dateInput:focus {
+    outline: none;
+    border-color: var(--cor-primaria-medio);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+/* ========================================================== */
+/* FIM DOS NOVOS ESTILOS */
+/* ========================================================== */
+
+
 .statusMessage {
     display: flex;
     align-items: flex-start;
@@ -321,7 +297,6 @@
     border: 1px solid #dbeafe;
 }
 
-/* Progress Bar */
 .progressBar {
     width: 100%;
     height: 8px;
@@ -355,7 +330,6 @@
     100% { transform: translateX(100%); }
 }
 
-/* Spinners */
 .spinner, .buttonSpinner {
     width: 20px;
     height: 20px;
@@ -376,11 +350,10 @@
     to { transform: rotate(360deg); }
 }
 
-/* Actions */
 .actions {
     display: flex;
     justify-content: center;
-    margin-top: 1.5rem;
+    margin-top: 2rem;
 }
 
 .uploadButton {
@@ -419,114 +392,6 @@
     box-shadow: 0 15px 30px rgba(16, 185, 129, 0.3);
 }
 
-/* Instructions Section */
-.instructionsSection {
-    display: flex;
-    justify-content: center;
-}
-
-.instructionsCard {
-    background: white;
-    border-radius: 20px;
-    padding: 2.5rem;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
-    border: 1px solid rgba(229, 231, 235, 0.5);
-    width: 100%;
-    max-width: 800px;
-}
-
-.instructionsHeader {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    margin-bottom: 2rem;
-    color: var(--cor-primaria-medio);
-}
-
-.instructionsHeader h2 {
-    font-size: 1.75rem;
-    font-weight: 700;
-    color: var(--cor-texto-principal);
-}
-
-.instructionsContent {
-    display: flex;
-    flex-direction: column;
-    gap: 2rem;
-}
-
-.requirement {
-    display: flex;
-    gap: 1.5rem;
-    align-items: flex-start;
-}
-
-.requirementNumber {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 40px;
-    height: 40px;
-    background: linear-gradient(135deg, var(--cor-primaria-medio), var(--cor-primaria-claro));
-    color: white;
-    border-radius: 50%;
-    font-weight: 700;
-    font-size: 1.1rem;
-    flex-shrink: 0;
-}
-
-.requirementText h4 {
-    font-size: 1.1rem;
-    font-weight: 600;
-    color: var(--cor-texto-principal);
-    margin-bottom: 0.5rem;
-}
-
-.requirementText p {
-    color: var(--cor-cinza-medio);
-    line-height: 1.6;
-    margin-bottom: 1rem;
-}
-
-.columnsList {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.75rem;
-}
-
-.columnsList code {
-    background: linear-gradient(135deg, #1f2937, #111827);
-    color: #e5e7eb;
-    padding: 0.5rem 1rem;
-    border-radius: 8px;
-    font-family: var(--font-roboto-mono, 'Courier New', monospace);
-    font-size: 0.85rem;
-    font-weight: 500;
-    border: 1px solid #374151;
-}
-
-.downloadTemplate {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    color: var(--cor-primaria-medio);
-    font-weight: 600;
-    cursor: pointer;
-    padding: 1rem;
-    border: 2px dashed var(--cor-primaria-claro);
-    border-radius: 12px;
-    margin-top: 2rem;
-    transition: all 0.3s;
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.05), rgba(59, 130, 246, 0.02));
-}
-
-.downloadTemplate:hover {
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(59, 130, 246, 0.05));
-    border-color: var(--cor-primaria-medio);
-    transform: translateY(-1px);
-}
-
-/* Animations */
 .fadeIn {
     animation: fadeIn 0.5s ease-out;
 }
@@ -557,43 +422,18 @@
     }
 }
 
-/* Responsive */
 @media (max-width: 768px) {
     .container {
         padding: 1rem;
-        gap: 2rem;
     }
-    
-    .heroTitle {
-        font-size: 2rem;
-    }
-    
-    .heroSubtitle {
-        font-size: 1.1rem;
-    }
-    
-    .heroStats {
-        gap: 1.5rem;
-        font-size: 0.9rem;
-    }
-    
     .uploadCard {
         padding: 2rem 1.5rem;
     }
-    
     .dropzone {
         padding: 3rem 1rem;
     }
-    
-    .instructionsCard {
-        padding: 2rem 1.5rem;
-    }
-    
-    .requirement {
+    .dateInputs {
+        grid-template-columns: 1fr;
         gap: 1rem;
-    }
-    
-    .columnsList {
-        flex-direction: column;
     }
 }

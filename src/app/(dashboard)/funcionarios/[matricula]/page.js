@@ -190,6 +190,7 @@ export default function FuncionarioProfilePage() {
                 {row.status}
             </span>
         )},
+        { header: 'Substituição?', accessor: 'necessidade_substituicao', cell: (row) => row.necessidade_substituicao ? 'Sim' : 'Não' },
         { header: 'Aviso', accessor: 'aviso', cell: (row) => (
             <Button 
                 variant="secondary" 
@@ -338,7 +339,8 @@ export default function FuncionarioProfilePage() {
         const data = {
             ...Object.fromEntries(formData.entries()),
             matricula_funcionario: matricula,
-            ano_planejamento: new Date().getFullYear()
+            ano_planejamento: new Date().getFullYear(),
+            necessidade_substituicao: event.target.necessidade_substituicao.checked
         };
         try {
             await api.ferias.create(matricula, data);
@@ -355,6 +357,7 @@ export default function FuncionarioProfilePage() {
         event.preventDefault();
         const formData = new FormData(event.target);
         const data = Object.fromEntries(formData.entries());
+        data.necessidade_substituicao = event.target.necessidade_substituicao.checked;
         try {
             await api.ferias.update(modalState.data.id, data);
             alert('Férias atualizadas com sucesso!');
@@ -794,6 +797,12 @@ export default function FuncionarioProfilePage() {
                                     <option value="Cancelada">Cancelada</option>
                                 </select>
                             </div>
+                            <div className={styles.formGroup}>
+                                <label className={styles.checkboxLabel}>
+                                    <input name="necessidade_substituicao" type="checkbox" value="true"/>
+                                    Necessita de Substituição?
+                                </label>
+                            </div>
                         </div>
                         <div className={styles.modalActions}>
                             <Button type="button" variant="secondary" onClick={closeModal}>Cancelar</Button>
@@ -832,6 +841,17 @@ export default function FuncionarioProfilePage() {
                                     <option value="Planejada">Planejada</option>
                                     <option value="Cancelada">Cancelada</option>
                                 </select>
+                            </div>
+                            <div className={styles.formGroup}>
+                                <label className={styles.checkboxLabel}>
+                                    <input 
+                                        name="necessidade_substituicao" 
+                                        type="checkbox" 
+                                        defaultChecked={modalState.data.necessidade_substituicao}
+                                        value="true"
+                                    />
+                                    Necessita de Substituição?
+                                </label>
                             </div>
                         </div>
                         <div className={styles.modalActions}>

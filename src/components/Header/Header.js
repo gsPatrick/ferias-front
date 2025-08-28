@@ -8,14 +8,17 @@ import styles from './Header.module.css';
 import Image from 'next/image';
 import { Menu, X, LogOut, User } from 'lucide-react';
 
-// ALTERADO: Adicionado novo item de navegação para "Afastados"
+// ==========================================================
+// ALTERADO: Adicionado novo item de navegação para "Visão Geral"
+// ==========================================================
 const navItems = [
     { href: '/dashboard', label: 'Dashboard' },
     { href: '/funcionarios', label: 'Funcionários' },
-    { href: '/afastados', label: 'Afastados' }, // NOVO LINK
+    { href: '/afastados', label: 'Afastados' },
     { href: '/planejamento', label: 'Planejamento' },
+    { href: '/planejamento/visao-geral', label: 'Visão Geral' }, // NOVO LINK
     { href: '/importacao', label: 'Importar Planilha' },
-    { href: '/usuarios', label: 'Usuários' }, // Corrigido 'Usuarios' para 'Usuários'
+    { href: '/usuarios', label: 'Usuários' },
 ];
 
 export default function Header() {
@@ -26,16 +29,13 @@ export default function Header() {
 
     useEffect(() => {
         // Tenta buscar os dados do usuário do localStorage.
-        // A chave 'user' deve ser consistente com o que você salva no login.
         const userDataString = localStorage.getItem('user');
         if (userDataString) {
             try {
                 const userData = JSON.parse(userDataString);
-                // O backend retorna user: { email, role }. Adicionamos um nome padrão se não houver.
                 setCurrentUser({ name: userData.nome || 'Admin', ...userData });
             } catch (error) {
                 console.error("Erro ao parsear dados do usuário:", error);
-                // Limpa dados inválidos
                 localStorage.removeItem('user');
             }
         }
@@ -66,13 +66,33 @@ export default function Header() {
                 </button>
                 <ul>
                     {navItems.map((item) => {
-                        const isActive = pathname.startsWith(item.href);
+                        // Lógica de ativação ajustada para corresponder exatamente ou ao início do caminho
+                        const isActive = item.href === '/planejamento/visao-geral' 
+                            ? pathname === item.href 
+                            : pathname.startsWith(item.href) && pathname !== '/planejamento/visao-geral';
+                        
+                        // Lógica especial para o link de Planejamento não ficar ativo quando Visão Geral estiver
+                        if (item.href === '/planejamento' && pathname === '/planejamento/visao-geral') {
+                            const isActiveOverride = false;
+                             return (
+                                <li key={item.href}>
+                                    <Link 
+                                        href={item.href} 
+                                        className={`${styles.navLink} ${isActiveOverride ? styles.active : ''}`} 
+                                        onClick={() => isMenuOpen && toggleMenu()}
+                                    >
+                                        {item.label}
+                                    </Link>
+                                </li>
+                            );
+                        }
+                        
                         return (
                             <li key={item.href}>
                                 <Link 
                                     href={item.href} 
                                     className={`${styles.navLink} ${isActive ? styles.active : ''}`} 
-                                    onClick={() => isMenuOpen && toggleMenu()} // Fecha o menu mobile ao clicar
+                                    onClick={() => isMenuOpen && toggleMenu()}
                                 >
                                     {item.label}
                                 </Link>

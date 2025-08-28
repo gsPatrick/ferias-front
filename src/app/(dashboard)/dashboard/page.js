@@ -6,21 +6,20 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import api from '@/services/api';
 import Card from '@/components/Card/Card';
-import Modal from '@/components/Modal/Modal'; // NOVO: Importa o Modal
+import Modal from '@/components/Modal/Modal';
 import DashboardChart from './DashboardChart';
 import Button from '@/components/Button/Button';
 import styles from './dashboard.module.css';
-import { Users, CalendarCheck, Percent, AlertTriangle, AlertOctagon, Info, CalendarX, RefreshCw } from 'lucide-react';
+import { Users, CalendarCheck, Percent, AlertTriangle, AlertOctagon, Info, CalendarX, RefreshCw, UserCheck } from 'lucide-react';
 
 // --- COMPONENTE INTERNO PARA PONTOS DE ATENÇÃO ---
-// CORREÇÃO: O componente ActionItem estava faltando. Adicionando ele aqui.
 const ActionItem = ({ item }) => {
     const getIcon = () => {
         switch (item.variant) {
             case 'danger': return <AlertTriangle className={styles.actionIconDanger} />;
             case 'warning': return <AlertOctagon className={styles.actionIconWarning} />;
             case 'info': return <Info className={styles.actionIconInfo} />;
-            default: return <Info className={styles.actionIconNeutral} />;
+            default: return <UserCheck className={styles.actionIconNeutral} />; // Ícone genérico para "reprogramação"
         }
     };
     return (
@@ -42,7 +41,6 @@ export default function DashboardPage() {
     const [error, setError] = useState(null);
     const router = useRouter();
 
-    // NOVO: Estados para o modal de funcionários planejados
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [planejados, setPlanejados] = useState([]);
     const [isLoadingModal, setIsLoadingModal] = useState(false);
@@ -51,8 +49,28 @@ export default function DashboardPage() {
         setIsLoading(true);
         setError(null);
         try {
-            const response = await api.dashboard.getSummary();
-            setSummaryData(response.data);
+            // ==========================================================
+            // ALTERADO: Busca os dados do resumo e do novo alerta em paralelo
+            // ==========================================================
+            const [summaryResponse, reprogramacaoResponse] = await Promise.all([
+                api.dashboard.getSummary(),
+                api.alertas.getNecessitaReprogramacao() // Padrão de 30 dias
+            ]);
+
+            const summary = summaryResponse.data;
+            const necessitamReprogramacao = reprogramacaoResponse.data;
+
+            // Adiciona o novo item de ação à lista existente
+            if (necessitamReprogramacao && necessitamReprogramacao.length > 0) {
+                summary.itensDeAcao.push({
+                    title: 'Necessitam Reprogramação',
+                    count: necessitamReprogramacao.length,
+                    link: '/funcionarios?filtro=reprogramar',
+                    variant: 'warning' // 'warning' para indicar que requer atenção
+                });
+            }
+
+            setSummaryData(summary);
         } catch (err) {
             console.error("Falha ao buscar dados do dashboard:", err);
             setError("Não foi possível carregar os dados do painel.");
@@ -69,15 +87,13 @@ export default function DashboardPage() {
         router.push('/importacao'); 
     };
 
-    // NOVO: Função para abrir o modal e buscar os funcionários planejados
     const handleOpenPlanejadosModal = async () => {
         setIsModalOpen(true);
         setIsLoadingModal(true);
         try {
-            // Usa o endpoint de planejamento com o filtro 'ativo'
-            const response = await api.planejamento.getAtivo();
-            // A resposta é uma lista de férias, então extraímos os funcionários
-            const funcionariosUnicos = response.data.reduce((acc, ferias) => {
+            const response = await api.ferias.getPlanejamentoAtivo({ ano: new Date().getFullYear(), limit: 10000 });
+            
+            const funcionariosUnicos = response.data.data.reduce((acc, ferias) => {
                 if (ferias.Funcionario && !acc.some(f => f.matricula === ferias.Funcionario.matricula)) {
                     acc.push(ferias.Funcionario);
                 }
@@ -139,7 +155,6 @@ export default function DashboardPage() {
                         value={cardsPrincipais.percentualPlanejado}
                         color="var(--cor-feedback-sucesso)"
                     />
-                    {/* ALTERADO: Adicionado onClick ao card */}
                     <Card 
                         icon={<Users size={28} />} 
                         title="Funcionários Planejados" 
@@ -155,7 +170,11 @@ export default function DashboardPage() {
                             <DashboardChart data={distribuicaoMensal} />
                         ) : (
                             <div className={styles.chartPlaceholder}>
-                                {/* ... (conteúdo do placeholder inalterado) ... */}
+                                 <div className={styles.placeholderContent}>
+                                    <CalendarX size={48} />
+                                    <h3>Nenhum dado de férias para exibir</h3>
+                                    <p>Importe uma planilha para gerar um planejamento e visualizar a distribuição anual aqui.</p>
+                                </div>
                             </div>
                         )}
                     </div>
@@ -163,7 +182,6 @@ export default function DashboardPage() {
                     <div className={styles.actionsSection}>
                         <h3 className={styles.sectionTitle}>Pontos de Atenção</h3>
                         <div className={styles.actionsList}>
-                            {/* CORREÇÃO: Mapeando os itens de ação para o componente ActionItem */}
                             {itensDeAcao && itensDeAcao.length > 0 ? (
                                 itensDeAcao.map((item, index) => (
                                    <ActionItem key={index} item={item} />
@@ -176,7 +194,6 @@ export default function DashboardPage() {
                 </div>
             </div>
 
-            {/* NOVO: Modal para exibir a lista de funcionários planejados */}
             <Modal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}

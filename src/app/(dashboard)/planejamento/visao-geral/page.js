@@ -1,205 +1,171 @@
 // /app/(dashboard)/planejamento/visao-geral/page.js
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import Link from 'next/link';
 import api from '@/services/api';
-import styles from './visao-geral.module.css';
 import Button from '@/components/Button/Button';
-import Modal from '@/components/Modal/Modal';
-import { Calendar, Filter, XCircle, User, CalendarDays } from 'lucide-react';
-import { eachDayOfInterval, format, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
+import Table from '@/components/Table/Table';
+import Pagination from '@/components/Pagination/Pagination';
+import styles from './visao-geral.module.css';
+import { Users, Search, Filter, XCircle } from 'lucide-react';
 
-const CalendarView = ({ events, currentDate, handleEventClick }) => {
-    const start = startOfMonth(currentDate);
-    const end = endOfMonth(currentDate);
-    const days = eachDayOfInterval({ start, end });
-    const startingDayOfWeek = start.getDay(); // 0 for Sunday, 1 for Monday...
+// --- HELPERS ---
 
-    return (
-        <div className={styles.calendarGrid}>
-            {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map(day => (
-                <div key={day} className={styles.dayHeader}>{day}</div>
-            ))}
-            {Array.from({ length: startingDayOfWeek }).map((_, i) => (
-                <div key={`empty-${i}`} className={styles.emptyCell}></div>
-            ))}
-            {days.map(day => {
-                const dayEvents = events.filter(e => 
-                    e.data_inicio && e.data_fim && isWithinInterval(day, { start: new Date(e.data_inicio), end: new Date(e.data_fim) })
-                );
-                return (
-                    <div key={day.toString()} className={styles.dayCell}>
-                        <span className={styles.dayNumber}>{format(day, 'd')}</span>
-                        <div className={styles.eventsContainer}>
-                            {dayEvents.map(event => (
-                                <div 
-                                    key={event.id} 
-                                    className={`${styles.eventTag} ${styles[event.tipo.toLowerCase()]}`} 
-                                    title={`${event.tipo}: ${event.funcionario}`}
-                                    onClick={() => handleEventClick(event)}
-                                >
-                                    {event.funcionario}
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                );
-            })}
-        </div>
-    );
+const formatDateForDisplay = (dateString) => {
+    if (!dateString) return 'N/A';
+    // Adiciona T00:00:00 para evitar problemas de fuso horário que podem mudar o dia
+    return new Date(dateString + 'T00:00:00').toLocaleDateString('pt-BR');
 };
 
+// --- COMPONENTE PRINCIPAL ---
 
-export default function VisaoGeralPage() {
-    const [events, setEvents] = useState([]);
+export default function VisaoGeralTabelaPage() {
+    const [allEvents, setAllEvents] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [currentDate, setCurrentDate] = useState(new Date());
     const [filters, setFilters] = useState({});
-    const [filterOptions, setFilterOptions] = useState({ 
-        gestoes: [], municipios: [], categorias: [], tiposContrato: [], estados: [], clientes: [], contratos: [] 
-    });
-    const [modalState, setModalState] = useState({ isOpen: false, event: null });
+    const [filterOptions, setFilterOptions] = useState({ gestoes: [], municipios: [], categorias: [] });
+    const [searchTerm, setSearchTerm] = useState('');
+    const [currentPage, setCurrentPage] = useState(1);
+    const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
+    const itemsPerPage = 20;
 
-    useEffect(() => {
-        const fetchOptions = async () => {
-            try {
-                const response = await api.funcionarios.getFilterOptions();
-                setFilterOptions({
-                    gestoes: response.data.gestoes || [],
-                    municipios: response.data.municipios || [],
-                    categorias: response.data.categorias || [],
-                    tiposContrato: response.data.tiposContrato || [],
-                    estados: response.data.estados || [],
-                    clientes: response.data.clientes || [],
-                    contratos: response.data.contratos || [],
-                });
-            } catch (error) {
-                console.error("Erro ao buscar opções de filtro:", error);
-            }
-        };
-        fetchOptions();
+    const fetchAllEvents = useCallback(async (year) => {
+        setIsLoading(true);
+        try {
+            const [feriasResponse, afastamentosResponse, optionsResponse] = await Promise.all([
+                api.ferias.getPlanejamentoAtivo({ ano: year, limit: 10000 }),
+                api.afastamentos.getAllActive({ limit: 10000 }),
+                api.funcionarios.getFilterOptions()
+            ]);
+
+            const feriasEvents = (feriasResponse.data.data || []).map(f => ({
+                id: `ferias-${f.id}`, tipo: 'Férias', Funcionario: f.Funcionario,
+                data_inicio: f.data_inicio, data_fim: f.data_fim, detalhe: f.status,
+            }));
+            const afastamentosEvents = (afastamentosResponse.data.data || []).map(a => ({
+                id: `afastamento-${a.id}`, tipo: 'Afastamento', Funcionario: a.Funcionario,
+                data_inicio: a.data_inicio, data_fim: a.data_fim, detalhe: a.motivo,
+            }));
+
+            const combinedEvents = [...feriasEvents, ...afastamentosEvents];
+            combinedEvents.sort((a, b) => new Date(b.data_inicio) - new Date(a.data_inicio));
+            
+            setAllEvents(combinedEvents);
+            setFilterOptions(optionsResponse.data || { gestoes: [], municipios: [], categorias: [] });
+        } catch (error) {
+            console.error("Erro ao buscar eventos:", error);
+        } finally {
+            setIsLoading(false);
+        }
     }, []);
 
     useEffect(() => {
-        const fetchEvents = async () => {
-            setIsLoading(true);
-            try {
-                const ano = currentDate.getFullYear();
-                const mes = currentDate.getMonth() + 1;
-                const response = await api.planejamento.getVisaoGeral(ano, mes, filters);
-                setEvents(response.data);
-            } catch (error) {
-                console.error("Erro ao buscar visão geral:", error);
-            } finally {
-                setIsLoading(false);
-            }
-        };
-        fetchEvents();
-    }, [currentDate, filters]);
-    
-    const handlePrevMonth = () => {
-        setCurrentDate(prev => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));
-    };
+        fetchAllEvents(currentYear);
+    }, [currentYear, fetchAllEvents]);
 
-    const handleNextMonth = () => {
-        setCurrentDate(prev => new Date(prev.getFullYear(), prev.getMonth() + 1, 1));
+    // --- LÓGICA DE FILTRAGEM CORRIGIDA E COMPLETA ---
+    const filteredEvents = useMemo(() => {
+        return allEvents.filter(event => {
+            const func = event.Funcionario || {};
+            
+            // Filtro de Busca Rápida (Nome ou Matrícula)
+            const searchMatch = searchTerm.trim() === '' || 
+                func.nome_funcionario?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                String(func.matricula || '').toLowerCase().includes(searchTerm.toLowerCase());
+
+            // Filtro por Tipo (Férias/Afastamento)
+            const typeMatch = !filters.tipo || event.tipo === filters.tipo;
+
+            // Filtro por Município
+            const municipioMatch = !filters.municipio || func.municipio_local_trabalho === filters.municipio;
+
+            // Filtro por Gestão
+            const gestaoMatch = !filters.gestao || func.des_grupo_contrato === filters.gestao;
+            
+            // Filtro por Categoria
+            const categoriaMatch = !filters.categoria || func.categoria === filters.categoria;
+
+            // Filtro por Status/Motivo
+            const detalheMatch = !filters.detalhe || event.detalhe?.toLowerCase().includes(filters.detalhe.toLowerCase());
+            
+            // Filtro por Data de Início
+            const startDateMatch = !filters.data_inicio_de || new Date(event.data_inicio) >= new Date(filters.data_inicio_de);
+            const endDateMatch = !filters.data_inicio_ate || new Date(event.data_inicio) <= new Date(filters.data_inicio_ate);
+
+            return searchMatch && typeMatch && municipioMatch && gestaoMatch && categoriaMatch && detalheMatch && startDateMatch && endDateMatch;
+        });
+    }, [allEvents, searchTerm, filters]);
+
+    const paginatedData = useMemo(() => {
+        const startIndex = (currentPage - 1) * itemsPerPage;
+        return filteredEvents.slice(startIndex, startIndex + itemsPerPage);
+    }, [filteredEvents, currentPage]);
+
+    const paginationInfo = {
+        currentPage: currentPage, totalPages: Math.ceil(filteredEvents.length / itemsPerPage), totalItems: filteredEvents.length
     };
 
     const handleFilterChange = (e) => {
-        setFilters(prev => ({ ...prev, [e.target.name]: e.target.value }));
+        const { name, value } = e.target;
+        setFilters(prev => ({ ...prev, [name]: value }));
+        setCurrentPage(1);
     };
-
+    
+    const handleSearchChange = (e) => setSearchTerm(e.target.value);
+    const handleYearChange = (e) => setCurrentYear(e.target.value);
     const handleClearFilters = () => {
         setFilters({});
+        setSearchTerm('');
+        setCurrentPage(1);
         document.getElementById('filter-form').reset();
     };
 
-    const handleEventClick = (event) => {
-        setModalState({ isOpen: true, event: event });
-    };
-
-    const closeModal = () => {
-        setModalState({ isOpen: false, event: null });
-    };
+    const columns = [
+        { header: 'Tipo', accessor: 'tipo', cell: (row) => <span className={`${styles.badge} ${row.tipo === 'Férias' ? styles.badgeFerias : styles.badgeAfastamento}`}>{row.tipo}</span> },
+        { header: 'Funcionário', accessor: 'Funcionario.nome_funcionario', cell: (row) => <Link href={`/funcionarios/${row.Funcionario.matricula}`} className={styles.nomeLink}>{row.Funcionario.nome_funcionario}</Link> },
+        { header: 'Matrícula', accessor: 'Funcionario.matricula' },
+        { header: 'Data Início', accessor: 'data_inicio', cell: (row) => formatDateForDisplay(row.data_inicio) },
+        { header: 'Data Fim', accessor: 'data_fim', cell: (row) => formatDateForDisplay(row.data_fim) },
+        { header: 'Status / Motivo', accessor: 'detalhe' },
+        { header: 'Município', accessor: 'Funcionario.municipio_local_trabalho' },
+        { header: 'Gestão Contrato', accessor: 'Funcionario.des_grupo_contrato' },
+    ];
 
     return (
-        <>
-            <div className={styles.container}>
-                <div className={styles.header}>
-                    <div className={styles.titleContainer}>
-                        <Calendar size={32} />
-                        <h1>Visão Geral do Planejamento</h1>
-                    </div>
-                </div>
-
-                <div className={styles.controlsAndFilters}>
-                    <div className={styles.monthNavigator}>
-                        <Button variant="secondary" onClick={handlePrevMonth}>&lt;</Button>
-                        <h2 className={styles.currentMonth}>{format(currentDate, 'MMMM yyyy', { locale: ptBR })}</h2>
-                        <Button variant="secondary" onClick={handleNextMonth}>&gt;</Button>
-                    </div>
-                    <form id="filter-form" className={styles.filterGrid}>
-                        <select name="cliente" onChange={handleFilterChange} defaultValue=""><option value="">Todo Cliente</option>{filterOptions.clientes.map(o => <option key={o} value={o}>{o}</option>)}</select>
-                        <select name="contrato" onChange={handleFilterChange} defaultValue=""><option value="">Todo Contrato</option>{filterOptions.contratos.map(o => <option key={o} value={o}>{o}</option>)}</select>
-                        <select name="grupoContrato" onChange={handleFilterChange} defaultValue=""><option value="">Toda Gestão</option>{filterOptions.gestoes.map(o => <option key={o} value={o}>{o}</option>)}</select>
-                        <select name="municipio" onChange={handleFilterChange} defaultValue=""><option value="">Todo Município</option>{filterOptions.municipios.map(o => <option key={o} value={o}>{o}</option>)}</select>
-                        <select name="categoria" onChange={handleFilterChange} defaultValue=""><option value="">Toda Categoria</option>{filterOptions.categorias.map(o => <option key={o} value={o}>{o}</option>)}</select>
-                        <select name="tipoContrato" onChange={handleFilterChange} defaultValue=""><option value="">Todo Tipo Contrato</option>{filterOptions.tiposContrato.map(o => <option key={o} value={o}>{o}</option>)}</select>
-                        <select name="estado" onChange={handleFilterChange} defaultValue=""><option value="">Todo Estado</option>{filterOptions.estados.map(o => <option key={o} value={o}>{o}</option>)}</select>
-                        <Button type="button" variant="secondary" onClick={handleClearFilters} icon={<XCircle size={16}/>}>Limpar</Button>
-                    </form>
-                </div>
-
-                <div className={styles.calendarWrapper}>
-                    {isLoading ? (
-                        <div className={styles.loadingState}>Carregando calendário...</div>
-                    ) : (
-                        <CalendarView events={events} currentDate={currentDate} handleEventClick={handleEventClick} />
-                    )}
+        <div className={styles.container}>
+            <div className={styles.header}>
+                <div className={styles.titleContainer}>
+                    <Users size={32} />
+                    <h1>Visão Geral de Ausências</h1>
+                    <select className={styles.yearSelector} value={currentYear} onChange={handleYearChange}>
+                        <option>2025</option><option>2024</option><option>2023</option>
+                    </select>
                 </div>
             </div>
-            
-            <Modal
-                isOpen={modalState.isOpen}
-                onClose={closeModal}
-                title={`Detalhes do Evento - ${modalState.event?.tipo}`}
-            >
-                {modalState.event && (
-                    <div className={styles.modalContent}>
-                        <div className={styles.modalDetailItem}>
-                            <User size={20} />
-                            <div>
-                                <span className={styles.modalLabel}>Funcionário</span>
-                                <span className={styles.modalValue}>{modalState.event.funcionario}</span>
-                            </div>
-                        </div>
-                        <div className={styles.modalDetailItem}>
-                            <span className={styles.modalLabel}>Matrícula</span>
-                            <span className={styles.modalValue}>{modalState.event.matricula}</span>
-                        </div>
-                        <div className={styles.modalDetailItem}>
-                            <CalendarDays size={20} />
-                            <div>
-                                <span className={styles.modalLabel}>Período</span>
-                                <span className={styles.modalValue}>
-                                    {format(new Date(modalState.event.data_inicio), 'dd/MM/yyyy')} até {format(new Date(modalState.event.data_fim), 'dd/MM/yyyy')}
-                                </span>
-                            </div>
-                        </div>
-                        <div className={styles.modalDetailItem}>
-                            <span className={styles.modalLabel}>{modalState.event.tipo === 'Férias' ? 'Status' : 'Motivo'}</span>
-                            <span className={styles.modalValue}>{modalState.event.status}</span>
-                        </div>
-                        <div className={styles.modalActions}>
-                            <Link href={`/funcionarios/${modalState.event.matricula}`} passHref>
-                                <Button variant="secondary" onClick={closeModal}>Ver Perfil Completo</Button>
-                            </Link>
-                        </div>
-                    </div>
-                )}
-            </Modal>
-        </>
+
+            <form id="filter-form" className={styles.filterGrid}>
+                {/* LINHA 1 DE FILTROS */}
+                <div className={`${styles.formGroup} ${styles.searchGroup}`} style={{ gridColumn: 'span 2' }}><label>Busca Rápida</label><div className={styles.inputIconWrapper}><Search size={18} className={styles.inputIcon} /><input type="text" placeholder="Nome ou matrícula..." value={searchTerm} onChange={handleSearchChange} /></div></div>
+                <div className={styles.formGroup}><label>Tipo de Evento</label><select name="tipo" onChange={handleFilterChange}><option value="">Todos</option><option value="Férias">Férias</option><option value="Afastamento">Afastamento</option></select></div>
+                <div className={styles.formGroup}><label>Status / Motivo</label><input type="text" name="detalhe" placeholder="Contém..." onChange={handleFilterChange} /></div>
+                
+                {/* LINHA 2 DE FILTROS */}
+                <div className={styles.formGroup}><label>Início (a partir de)</label><input type="date" name="data_inicio_de" onChange={handleFilterChange} /></div>
+                <div className={styles.formGroup}><label>Início (até)</label><input type="date" name="data_inicio_ate" onChange={handleFilterChange} /></div>
+                <div className={styles.formGroup}><label>Município</label><select name="municipio" onChange={handleFilterChange}><option value="">Todos</option>{filterOptions.municipios.map(o => <option key={o} value={o}>{o}</option>)}</select></div>
+                <div className={styles.formGroup}><label>Gestão Contrato</label><select name="gestao" onChange={handleFilterChange}><option value="">Todas</option>{filterOptions.gestoes.map(o => <option key={o} value={o}>{o}</option>)}</select></div>
+                
+                <div className={styles.filterActions}><Button type="button" variant="secondary" onClick={handleClearFilters} icon={<XCircle size={16}/>}>Limpar</Button></div>
+            </form>
+
+            <div className={styles.tableWrapper}>
+                <Table columns={columns} data={paginatedData} isLoading={isLoading} />
+            </div>
+
+            {paginationInfo && paginationInfo.totalPages > 1 && (
+                <Pagination pagination={paginationInfo} onPageChange={setCurrentPage} />
+            )}
+        </div>
     );
 }

@@ -66,12 +66,14 @@ function PlanejamentoComponent() {
     const fetchData = useCallback(async (year) => {
         setIsLoading(true);
         try {
+            // CORREÇÃO: Busca os dados do planejamento E as opções de filtro em paralelo.
             const [feriasResponse, optionsResponse] = await Promise.all([
                 api.ferias.getPlanejamentoAtivo({ ano: year, limit: 10000 }),
                 api.funcionarios.getFilterOptions()
             ]);
+            
             setAllPlannedFerias(feriasResponse.data.data || []);
-            setFilterOptions(optionsResponse.data || {});
+            setFilterOptions(optionsResponse.data || {}); // Popula o estado com as opções de filtro
         } catch (error) {
             console.error("Falha ao buscar dados do planejamento:", error);
             setAllPlannedFerias([]);
@@ -100,16 +102,7 @@ function PlanejamentoComponent() {
                 return String(itemValue).toLowerCase().includes(value.toLowerCase());
             });
 
-            // NOVO BLOCO
-        const specialFilterMatch = () => {
-            if (filters.filtro === 'pendente_substituto') {
-                return feria.necessidade_substituicao && feria.observacao?.toLowerCase().includes('pendente de alocação');
-            }
-            return true;
-        };
-
-            return searchMatch && filtersMatch && specialFilterMatch();
-
+            return searchMatch && filtersMatch;
         });
     }, [allPlannedFerias, searchTerm, filters]);
 
@@ -145,7 +138,9 @@ function PlanejamentoComponent() {
         setFilters({});
         setSearchTerm('');
         setCurrentPage(1);
-        document.getElementById('filter-form').reset();
+        if (document.getElementById('filter-form')) {
+            document.getElementById('filter-form').reset();
+        }
     };
 
     const handleSelectAll = (checked) => {
@@ -158,9 +153,6 @@ function PlanejamentoComponent() {
         if (!checked) setSelectAll(false);
     };
 
-    // ==========================================================
-    // NOVA FUNÇÃO DE EXPORTAÇÃO
-    // ==========================================================
     const handleExport = async () => {
         setIsExporting(true);
         try {
@@ -194,9 +186,6 @@ function PlanejamentoComponent() {
         { label: 'Excluir Férias', icon: <Trash2 size={16}/>, variant: 'danger', onClick: () => openModal('excluir', ferias) },
     ];
 
-    // ==========================================================
-    // COLUNAS ATUALIZADAS
-    // ==========================================================
     const columns = [
         { header: 'Ações', accessor: 'acoes', sticky: true }, 
         { header: 'Matrícula', accessor: 'Funcionario.matricula' },
@@ -206,10 +195,10 @@ function PlanejamentoComponent() {
         { header: 'Fim Férias', accessor: 'data_fim' },
         { header: 'Dias', accessor: 'qtd_dias' },
         { header: 'Categoria', accessor: 'Funcionario.categoria' }, 
-        { header: 'Contrato', accessor: 'Funcionario.contrato' }, // <-- NOVA COLUNA AQUI
+        { header: 'Contrato', accessor: 'Funcionario.contrato' },
         { header: 'Gestão Contrato', accessor: 'Funcionario.des_grupo_contrato' },
         { header: 'Município', accessor: 'Funcionario.municipio_local_trabalho' },
-        { header: 'Estado (UF)', accessor: 'Funcionario.sigla_local' }, // NOVA COLUNA
+        { header: 'Estado (UF)', accessor: 'Funcionario.sigla_local' },
         { header: 'Status Funcionário', accessor: 'Funcionario.status' },
         { header: 'Substituição?', accessor: 'necessidade_substituicao' }
     ];
@@ -227,7 +216,7 @@ function PlanejamentoComponent() {
     };
     
    const renderModalContent = () => {
-        const refreshData = () => fetchAllPlannedFerias(currentYear);
+        const refreshData = () => fetchData(currentYear);
         switch (modalState.type) {
             case 'criar':
             case 'editar':
@@ -337,7 +326,7 @@ function PlanejamentoComponent() {
                 return (
                     <div style={{ textAlign: 'center' }}>
                         <p>Deseja recalcular o planejamento de férias para o ano de <strong>{currentYear}</strong>?</p>
-                        <p style={{color: '#ef4444', fontSize: '0.9rem', marginTop: '1rem'}}>Atenção: O planejamento ativo atual será arquivado e um novo será gerado. Alterações manuais serão perdidas.</p>
+                        <p style={{color: '#ef4444', fontSize: '0.9rem', marginTop: '1rem'}}>Atenção: O planejamento ativo atual será arquivado e um novo será gerado. Alterações manuais serão preservadas.</p>
                         <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', marginTop: '2rem' }}><Button variant="secondary" onClick={closeModal}>Cancelar</Button><Button variant="primary" onClick={handleConfirmRecalcular}>Sim, Recalcular</Button></div>
                     </div>
                 );
@@ -388,7 +377,7 @@ function PlanejamentoComponent() {
                     <CalendarClock size={32} />
                     <h1>Planejamento de Férias</h1>
                     <select className={styles.yearSelector} value={currentYear} onChange={handleYearChange}>
-                        <option>2025</option><option>2024</option><option>2023</option>
+                        <option>2026</option><option>2025</option><option>2024</option><option>2023</option>
                     </select>
                 </div>
                 <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
@@ -406,15 +395,11 @@ function PlanejamentoComponent() {
                     <div className={`${styles.formGroup} ${styles.searchGroup}`} style={{ gridColumn: '1 / span 2' }}><label htmlFor="q">Busca Rápida</label><div className={styles.inputIconWrapper}><Search size={18} className={styles.inputIcon} /><input id="q" name="q" type="text" placeholder="Nome ou matrícula..." value={searchTerm} onChange={handleSearchChange} /></div></div>
                     <div className={styles.formGroup}><label>Município</label><select name="municipio_local_trabalho" value={filters.municipio_local_trabalho || ''} onChange={handleFilterChange}><option value="">Todos</option>{filterOptions.municipios?.map(o => <option key={o} value={o}>{o}</option>)}</select></div>
                     <div className={styles.formGroup}><label>Gestão Contrato</label><select name="des_grupo_contrato" value={filters.des_grupo_contrato || ''} onChange={handleFilterChange}><option value="">Todas</option>{filterOptions.gestoes?.map(o => <option key={o} value={o}>{o}</option>)}</select></div>
-                    <div className={styles.formGroup}><label>Categoria/Cargo</label><select name="categoria" value={filters.categoria || ''} onChange={handleFilterChange}><option value="">Todas</option>{filterOptions.categorias?.map(o => <option key={o} value={o}>{o}</option>)}</select></div>
-                    {/* ========================================================== */}
-                    {/* NOVOS FILTROS ADICIONADOS AQUI */}
-                    {/* ========================================================== */}
+                    <div className={styles.formGroup}><label>Categoria/Cargo</label><select name="categoria" value={filters.categoria || ''} onChange={handleFilterChange}><option value="">Todos</option>{filterOptions.categorias?.map(o => <option key={o} value={o}>{o}</option>)}</select></div>
                     <div className={styles.formGroup}><label>Estado (UF)</label><select name="sigla_local" value={filters.sigla_local || ''} onChange={handleFilterChange}><option value="">Todos</option>{filterOptions.estados?.map(o => <option key={o} value={o}>{o}</option>)}</select></div>
-                    <div className={styles.formGroup}><label>Escala</label><select name="escala" value={filters.escala || ''} onChange={handleFilterChange}><option value="">Todas</option>{filterOptions.escalas?.map(o => <option key={o} value={o}>{o}</option>)}</select></div>
+                    <div className={styles.formGroup}><label>Escala</label><select name="escala" value={filters.escala || ''} onChange={handleFilterChange}><option value="">Todos</option>{filterOptions.escalas?.map(o => <option key={o} value={o}>{o}</option>)}</select></div>
                     <div className={styles.formGroup}><label>Cliente</label><select name="cliente" value={filters.cliente || ''} onChange={handleFilterChange}><option value="">Todos</option>{filterOptions.clientes?.map(o => <option key={o} value={o}>{o}</option>)}</select></div>
                     <div className={styles.formGroup}><label>Contrato</label><select name="contrato" value={filters.contrato || ''} onChange={handleFilterChange}><option value="">Todos</option>{filterOptions.contratos?.map(o => <option key={o} value={o}>{o}</option>)}</select></div>
-                    
                     <div className={styles.filterActions}><Button type="button" variant="secondary" onClick={handleClearFilters} icon={<XCircle size={16}/>}>Limpar Filtros</Button></div>
                 </form>
             )}
@@ -438,10 +423,10 @@ function PlanejamentoComponent() {
                                         <td>{formatDateForDisplay(row.data_fim)}</td>
                                         <td>{row.qtd_dias}</td>
                                         <td>{row.Funcionario.categoria || '---'}</td>
-                                        <td>{row.Funcionario.contrato || '---'}</td> {/* <-- NOVA CÉLULA AQUI */}
+                                        <td>{row.Funcionario.contrato || '---'}</td>
                                         <td>{row.Funcionario.des_grupo_contrato || '---'}</td>
                                         <td>{row.Funcionario.municipio_local_trabalho || '---'}</td>
-                                        <td>{row.Funcionario.sigla_local || '---'}</td> {/* NOVA CÉLULA */}
+                                        <td>{row.Funcionario.sigla_local || '---'}</td>
                                         <td><StatusBadge status={row.Funcionario.status} /></td>
                                         <td>{row.necessidade_substituicao ? 'Sim' : 'Não'}</td>
                                     </tr>

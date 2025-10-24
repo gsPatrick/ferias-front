@@ -14,7 +14,6 @@ import { Users, Search, Filter, XCircle } from 'lucide-react';
 
 const formatDateForDisplay = (dateString) => {
     if (!dateString) return 'N/A';
-    // Adiciona T00:00:00 para evitar problemas de fuso horário que podem mudar o dia
     return new Date(dateString + 'T00:00:00').toLocaleDateString('pt-BR');
 };
 
@@ -24,13 +23,13 @@ export default function VisaoGeralTabelaPage() {
     const [allEvents, setAllEvents] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [filters, setFilters] = useState({});
-    const [filterOptions, setFilterOptions] = useState({ gestoes: [], municipios: [], categorias: [] });
+    const [filterOptions, setFilterOptions] = useState({ gestoes: [], municipios: [], categorias: [], tiposContrato: [], estados: [], clientes: [], contratos: [] });
     const [searchTerm, setSearchTerm] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
     const itemsPerPage = 20;
 
-    const fetchAllEvents = useCallback(async (year) => {
+    const fetchAllData = useCallback(async (year) => {
         setIsLoading(true);
         try {
             const [feriasResponse, afastamentosResponse, optionsResponse] = await Promise.all([
@@ -52,48 +51,40 @@ export default function VisaoGeralTabelaPage() {
             combinedEvents.sort((a, b) => new Date(b.data_inicio) - new Date(a.data_inicio));
             
             setAllEvents(combinedEvents);
-            setFilterOptions(optionsResponse.data || { gestoes: [], municipios: [], categorias: [] });
+            setFilterOptions(optionsResponse.data || { gestoes: [], municipios: [], categorias: [], tiposContrato: [], estados: [], clientes: [], contratos: [] });
         } catch (error) {
-            console.error("Erro ao buscar eventos:", error);
+            console.error("Erro ao buscar eventos e opções de filtro:", error);
         } finally {
             setIsLoading(false);
         }
     }, []);
 
     useEffect(() => {
-        fetchAllEvents(currentYear);
-    }, [currentYear, fetchAllEvents]);
+        fetchAllData(currentYear);
+    }, [currentYear, fetchAllData]);
 
-    // --- LÓGICA DE FILTRAGEM CORRIGIDA E COMPLETA ---
     const filteredEvents = useMemo(() => {
         return allEvents.filter(event => {
             const func = event.Funcionario || {};
             
-            // Filtro de Busca Rápida (Nome ou Matrícula)
             const searchMatch = searchTerm.trim() === '' || 
                 func.nome_funcionario?.toLowerCase().includes(searchTerm.toLowerCase()) || 
                 String(func.matricula || '').toLowerCase().includes(searchTerm.toLowerCase());
 
-            // Filtro por Tipo (Férias/Afastamento)
-            const typeMatch = !filters.tipo || event.tipo === filters.tipo;
+            const filtersMatch = Object.entries(filters).every(([key, value]) => {
+                if (!value) return true;
+                
+                // Trata filtros de evento e filtros de funcionário
+                const itemValue = key === 'tipo' ? event[key] : func[key];
 
-            // Filtro por Município
-            const municipioMatch = !filters.municipio || func.municipio_local_trabalho === filters.municipio;
+                if (itemValue === null || itemValue === undefined) return false;
+                return String(itemValue).toLowerCase().includes(value.toLowerCase());
+            });
 
-            // Filtro por Gestão
-            const gestaoMatch = !filters.gestao || func.des_grupo_contrato === filters.gestao;
-            
-            // Filtro por Categoria
-            const categoriaMatch = !filters.categoria || func.categoria === filters.categoria;
-
-            // Filtro por Status/Motivo
-            const detalheMatch = !filters.detalhe || event.detalhe?.toLowerCase().includes(filters.detalhe.toLowerCase());
-            
-            // Filtro por Data de Início
             const startDateMatch = !filters.data_inicio_de || new Date(event.data_inicio) >= new Date(filters.data_inicio_de);
             const endDateMatch = !filters.data_inicio_ate || new Date(event.data_inicio) <= new Date(filters.data_inicio_ate);
 
-            return searchMatch && typeMatch && municipioMatch && gestaoMatch && categoriaMatch && detalheMatch && startDateMatch && endDateMatch;
+            return searchMatch && filtersMatch && startDateMatch && endDateMatch;
         });
     }, [allEvents, searchTerm, filters]);
 
@@ -114,6 +105,7 @@ export default function VisaoGeralTabelaPage() {
     
     const handleSearchChange = (e) => setSearchTerm(e.target.value);
     const handleYearChange = (e) => setCurrentYear(e.target.value);
+    
     const handleClearFilters = () => {
         setFilters({});
         setSearchTerm('');
@@ -145,16 +137,24 @@ export default function VisaoGeralTabelaPage() {
             </div>
 
             <form id="filter-form" className={styles.filterGrid}>
-                {/* LINHA 1 DE FILTROS */}
-                <div className={`${styles.formGroup} ${styles.searchGroup}`} style={{ gridColumn: 'span 2' }}><label>Busca Rápida</label><div className={styles.inputIconWrapper}><Search size={18} className={styles.inputIcon} /><input type="text" placeholder="Nome ou matrícula..." value={searchTerm} onChange={handleSearchChange} /></div></div>
-                <div className={styles.formGroup}><label>Tipo de Evento</label><select name="tipo" onChange={handleFilterChange}><option value="">Todos</option><option value="Férias">Férias</option><option value="Afastamento">Afastamento</option></select></div>
-                <div className={styles.formGroup}><label>Status / Motivo</label><input type="text" name="detalhe" placeholder="Contém..." onChange={handleFilterChange} /></div>
+                {/* LINHA 1: BUSCA RÁPIDA E TIPO */}
+                <div className={`${styles.formGroup} ${styles.searchGroup}`}><label>Busca Rápida</label><div className={styles.inputIconWrapper}><Search size={18} className={styles.inputIcon} /><input type="text" placeholder="Nome ou matrícula..." value={searchTerm} onChange={handleSearchChange} /></div></div>
+                <div className={styles.formGroup}><label>Tipo de Evento</label><select name="tipo" onChange={handleFilterChange} defaultValue=""><option value="">Todos</option><option value="Férias">Férias</option><option value="Afastamento">Afastamento</option></select></div>
                 
-                {/* LINHA 2 DE FILTROS */}
+                {/* LINHA 2: DATAS */}
                 <div className={styles.formGroup}><label>Início (a partir de)</label><input type="date" name="data_inicio_de" onChange={handleFilterChange} /></div>
                 <div className={styles.formGroup}><label>Início (até)</label><input type="date" name="data_inicio_ate" onChange={handleFilterChange} /></div>
-                <div className={styles.formGroup}><label>Município</label><select name="municipio" onChange={handleFilterChange}><option value="">Todos</option>{filterOptions.municipios.map(o => <option key={o} value={o}>{o}</option>)}</select></div>
-                <div className={styles.formGroup}><label>Gestão Contrato</label><select name="gestao" onChange={handleFilterChange}><option value="">Todas</option>{filterOptions.gestoes.map(o => <option key={o} value={o}>{o}</option>)}</select></div>
+
+                {/* LINHA 3: FILTROS DE ESTRUTURA */}
+                <div className={styles.formGroup}><label>Grupo/Gestão</label><select name="des_grupo_contrato" onChange={handleFilterChange} defaultValue=""><option value="">Todos</option>{filterOptions.gestoes.map(o => <option key={o} value={o}>{o}</option>)}</select></div>
+                <div className={styles.formGroup}><label>Cliente</label><select name="cliente" onChange={handleFilterChange} defaultValue=""><option value="">Todos</option>{filterOptions.clientes.map(o => <option key={o} value={o}>{o}</option>)}</select></div>
+                <div className={styles.formGroup}><label>Contrato</label><select name="contrato" onChange={handleFilterChange} defaultValue=""><option value="">Todos</option>{filterOptions.contratos.map(o => <option key={o} value={o}>{o}</option>)}</select></div>
+
+                {/* LINHA 4: FILTROS DE LOCAL E CARGO */}
+                <div className={styles.formGroup}><label>Município (Local)</label><select name="municipio_local_trabalho" onChange={handleFilterChange} defaultValue=""><option value="">Todos</option>{filterOptions.municipios.map(o => <option key={o} value={o}>{o}</option>)}</select></div>
+                <div className={styles.formGroup}><label>Estado (UF)</label><select name="sigla_local" onChange={handleFilterChange} defaultValue=""><option value="">Todos</option>{filterOptions.estados.map(o => <option key={o} value={o}>{o}</option>)}</select></div>
+                <div className={styles.formGroup}><label>Categoria/Cargo</label><select name="categoria" onChange={handleFilterChange} defaultValue=""><option value="">Todos</option>{filterOptions.categorias.map(o => <option key={o} value={o}>{o}</option>)}</select></div>
+                <div className={styles.formGroup}><label>Tipo de Contrato</label><select name="categoria_trab" onChange={handleFilterChange} defaultValue=""><option value="">Todos</option>{filterOptions.tiposContrato.map(o => <option key={o} value={o}>{o}</option>)}</select></div>
                 
                 <div className={styles.filterActions}><Button type="button" variant="secondary" onClick={handleClearFilters} icon={<XCircle size={16}/>}>Limpar</Button></div>
             </form>

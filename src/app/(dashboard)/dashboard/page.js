@@ -19,7 +19,7 @@ const ActionItem = ({ item }) => {
             case 'danger': return <AlertTriangle className={styles.actionIconDanger} />;
             case 'warning': return <AlertOctagon className={styles.actionIconWarning} />;
             case 'info': return <Info className={styles.actionIconInfo} />;
-            default: return <UserCheck className={styles.actionIconNeutral} />; // Ícone genérico para "reprogramação"
+            default: return <UserCheck className={styles.actionIconNeutral} />;
         }
     };
     return (
@@ -50,23 +50,38 @@ export default function DashboardPage() {
         setError(null);
         try {
             // ==========================================================
-            // ALTERADO: Busca os dados do resumo e do novo alerta em paralelo
+            // ALTERAÇÃO: Busca os dados de resumo, reprogramação e
+            // retornos próximos em paralelo para otimização.
             // ==========================================================
-            const [summaryResponse, reprogramacaoResponse] = await Promise.all([
+            const [summaryResponse, reprogramacaoResponse, retornosResponse] = await Promise.all([
                 api.dashboard.getSummary(),
-                api.alertas.getNecessitaReprogramacao() // Padrão de 30 dias
+                api.alertas.getNecessitaReprogramacao(), // Padrão de 30 dias
+                api.alertas.getRetornosProximos(30)      // Busca retornos nos próximos 30 dias
             ]);
 
             const summary = summaryResponse.data;
             const necessitamReprogramacao = reprogramacaoResponse.data;
+            const retornosProximos = retornosResponse.data;
 
-            // Adiciona o novo item de ação à lista existente
+            // Adiciona o item de ação "Necessitam Reprogramação" se houver dados
             if (necessitamReprogramacao && necessitamReprogramacao.length > 0) {
                 summary.itensDeAcao.push({
                     title: 'Necessitam Reprogramação',
                     count: necessitamReprogramacao.length,
                     link: '/funcionarios?filtro=reprogramar',
-                    variant: 'warning' // 'warning' para indicar que requer atenção
+                    variant: 'warning'
+                });
+            }
+
+            // ==========================================================
+            // NOVA LÓGICA: Adiciona o item de ação "Retornos Próximos"
+            // ==========================================================
+            if (retornosProximos && retornosProximos.length > 0) {
+                summary.itensDeAcao.push({
+                    title: 'Retornos Próximos (30d)',
+                    count: retornosProximos.length,
+                    link: '/afastados', // O link leva para a página de afastados para mais detalhes
+                    variant: 'info' // Variante 'info' para indicar uma notificação
                 });
             }
 
@@ -183,7 +198,8 @@ export default function DashboardPage() {
                         <h3 className={styles.sectionTitle}>Pontos de Atenção</h3>
                         <div className={styles.actionsList}>
                             {itensDeAcao && itensDeAcao.length > 0 ? (
-                                itensDeAcao.map((item, index) => (
+                                // Ordena os itens para manter uma ordem consistente na UI
+                                itensDeAcao.sort((a, b) => a.title.localeCompare(b.title)).map((item, index) => (
                                    <ActionItem key={index} item={item} />
                                 ))
                             ) : (

@@ -10,7 +10,7 @@ import Modal from '@/components/Modal/Modal';
 import ActionMenu from '@/components/ActionMenu/ActionMenu';
 import Pagination from '@/components/Pagination/Pagination';
 import styles from './funcionarios.module.css';
-import { User, Search, Filter, UserPlus, Trash2, CalendarPlus, FileWarning, Download, XCircle } from 'lucide-react';
+import { User, Search, Filter, UserPlus, Trash2, CalendarPlus, FileWarning, Download, XCircle, AlertCircle } from 'lucide-react';
 
 // --- HELPERS E COMPONENTES INTERNOS ---
 
@@ -62,6 +62,7 @@ function FuncionariosComponent() {
     // ESTADOS GERAIS
     const [todosFuncionarios, setTodosFuncionarios] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [isExporting, setIsExporting] = useState(false); // NOVO ESTADO
     const [modalState, setModalState] = useState({ type: null, data: null, isOpen: false });
     const [selectedFuncionarios, setSelectedFuncionarios] = useState([]);
     const [selectAll, setSelectAll] = useState(false);
@@ -153,18 +154,12 @@ function FuncionariosComponent() {
     // HANDLERS DE SELEÇÃO
     const handleSelectAll = (checked) => {
         setSelectAll(checked);
-        if (checked) {
-            setSelectedFuncionarios(paginatedData.map(f => f.matricula));
-        } else {
-            setSelectedFuncionarios([]);
-        }
+        setSelectedFuncionarios(checked ? paginatedData.map(f => f.matricula) : []);
     };
 
     const handleSelectFuncionario = (matricula, checked) => {
-        if (checked) {
-            setSelectedFuncionarios(prev => [...prev, matricula]);
-        } else {
-            setSelectedFuncionarios(prev => prev.filter(id => id !== matricula));
+        setSelectedFuncionarios(prev => checked ? [...prev, matricula] : prev.filter(id => id !== matricula));
+        if (!checked) {
             setSelectAll(false);
         }
     };
@@ -174,18 +169,25 @@ function FuncionariosComponent() {
     const closeModal = () => setModalState({ type: null, data: null, isOpen: false });
     
     // HANDLERS DE AÇÕES
-    const handleExportSelected = async () => {
-        if (selectedFuncionarios.length === 0) {
-            alert('Selecione pelo menos um funcionário para exportar.');
+    const handleExport = async () => {
+        if (funcionariosFiltrados.length === 0) {
+            alert('Não há funcionários para exportar com os filtros atuais.');
             return;
         }
         
+        setIsExporting(true);
         try {
-            const response = await api.funcionarios.exportSelected(selectedFuncionarios);
-            downloadFile(response.data, 'funcionarios_selecionados.xlsx');
+            // Envia todos os filtros aplicados e o termo de busca para o backend
+            const response = await api.relatorios.exportarFuncionarios(
+                { ...filters, busca: searchTerm }, 
+                [] // Array de matrículas vazio para indicar que queremos usar os filtros
+            );
+            downloadFile(response.data, 'relatorio_funcionarios.xlsx');
         } catch (error) {
             console.error('Erro ao exportar:', error);
-            alert('Erro ao exportar funcionários selecionados.');
+            alert('Erro ao exportar funcionários.');
+        } finally {
+            setIsExporting(false);
         }
     };
 
@@ -227,6 +229,7 @@ function FuncionariosComponent() {
         { header: 'Matrícula', accessor: 'matricula' },
         { header: 'Nome', accessor: 'nome_funcionario' }, 
         { header: 'Status', accessor: 'status' },
+        { header: 'Dias Disp.', accessor: 'saldo_dias_ferias' }, // NOVA COLUNA
         { header: 'Situação Atual', accessor: 'situacao_ferias_afastamento_hoje' }, 
         { header: 'Admissão', accessor: 'dth_admissao' },
         { header: 'Próx. Período', accessor: 'proximo_periodo_aquisitivo_texto' }, 
@@ -245,7 +248,7 @@ function FuncionariosComponent() {
         { header: 'Convenção', accessor: 'convencao' },
     ];
 
-    // Opções dinâmicas para os filtros - TODAS AS COLUNAS
+    // Opções dinâmicas para os filtros
     const filterOptions = useMemo(() => ({
         status: ['Ativo', 'Inativo'],
         matricula: getUniqueOptions(todosFuncionarios, 'matricula'),
@@ -392,14 +395,13 @@ function FuncionariosComponent() {
                     e.preventDefault();
                     const formData = new FormData(e.target);
                     const data = Object.fromEntries(formData.entries());
-                    // Converte o valor do checkbox para booleano
                     data.impacta_ferias = !!data.impacta_ferias;
 
                     try {
                         await api.afastamentos.create(modalState.data.matricula, data);
                         alert('Afastamento lançado com sucesso!');
                         closeModal();
-                        refreshData(); // Atualiza a lista para refletir a nova situação do funcionário
+                        refreshData();
                     } catch (error) {
                         console.error("Erro ao lançar afastamento:", error);
                         alert(error.response?.data?.message || "Erro ao lançar afastamento.");
@@ -484,10 +486,10 @@ function FuncionariosComponent() {
                     <Button 
                         variant="secondary" 
                         icon={<Download size={16} />} 
-                        onClick={handleExportSelected}
-                        disabled={selectedFuncionarios.length === 0}
+                        onClick={handleExport}
+                        disabled={isExporting || funcionariosFiltrados.length === 0}
                     >
-                        Exportar ({selectedFuncionarios.length})
+                        {isExporting ? 'Exportando...' : `Exportar (${funcionariosFiltrados.length})`}
                     </Button>
                     {selectedFuncionarios.length > 0 && (
                         <Button 
@@ -507,271 +509,41 @@ function FuncionariosComponent() {
                 </div>
             </div>
 
-            {/* ÁREA DE FILTROS - TODAS AS COLUNAS */}
+            {/* ÁREA DE FILTROS */}
             {showFilters && (
                 <div className={styles.filterGrid}>
-                    {/* Linha 1 - 5 filtros */}
-                    {/* Busca rápida */}
                     <div className={`${styles.formGroup} ${styles.searchGroup}`}>
                         <label htmlFor="search">Busca Rápida</label>
                         <div className={styles.inputIconWrapper}>
                             <Search size={18} className={styles.inputIcon} />
-                            <input 
-                                id="search" 
-                                type="text" 
-                                placeholder="Nome ou matrícula..." 
-                                value={searchTerm} 
-                                onChange={handleSearchChange}
-                            />
+                            <input id="search" type="text" placeholder="Nome ou matrícula..." value={searchTerm} onChange={handleSearchChange}/>
                         </div>
                     </div>
-                    
-                    {/* Status */}
                     <div className={styles.formGroup}>
                         <label htmlFor="status">Status</label>
-                        <select 
-                            id="status" 
-                            name="status" 
-                            value={filters.status || ''} 
-                            onChange={handleFilterChange}
-                        >
+                        <select id="status" name="status" value={filters.status || ''} onChange={handleFilterChange}>
                             <option value="">Todos</option>
-                            {filterOptions.status.map(opt => 
-                                <option key={opt} value={opt}>{opt}</option>
-                            )}
+                            {filterOptions.status.map(opt => <option key={opt} value={opt}>{opt}</option>)}
                         </select>
                     </div>
-                    
-                    {/* Matrícula */}
-                    <div className={styles.formGroup}>
-                        <label htmlFor="matricula">Matrícula</label>
-                        <input 
-                            id="matricula" 
-                            name="matricula" 
-                            type="text" 
-                            placeholder="Filtrar por matrícula" 
-                            value={filters.matricula || ''} 
-                            onChange={handleFilterChange} 
-                        />
-                    </div>
-                    
-                    {/* Situação Atual */}
-                    <div className={styles.formGroup}>
-                        <label htmlFor="situacao_ferias_afastamento_hoje">Situação Atual</label>
-                        <input 
-                            id="situacao_ferias_afastamento_hoje" 
-                            name="situacao_ferias_afastamento_hoje" 
-                            type="text" 
-                            placeholder="Filtrar situação" 
-                            value={filters.situacao_ferias_afastamento_hoje || ''} 
-                            onChange={handleFilterChange} 
-                        />
-                    </div>
-                    
-                    {/* Categoria/Cargo */}
-                    <div className={styles.formGroup}>
-                        <label htmlFor="categoria">Categoria/Cargo</label>
-                        <input 
-                            id="categoria" 
-                            name="categoria" 
-                            type="text" 
-                            placeholder="Filtrar por cargo" 
-                            value={filters.categoria || ''} 
-                            onChange={handleFilterChange} 
-                        />
-                    </div>
-
-                    {/* Linha 2 - 5 filtros */}
-                    {/* Categoria Trabalhador */}
-                    <div className={styles.formGroup}>
-                        <label htmlFor="categoria_trab">Cat. Trabalhador</label>
-                        <input 
-                            id="categoria_trab" 
-                            name="categoria_trab" 
-                            type="text" 
-                            placeholder="Categoria trabalhador" 
-                            value={filters.categoria_trab || ''} 
-                            onChange={handleFilterChange} 
-                        />
-                    </div>
-                    
-                    {/* Horário */}
-                    <div className={styles.formGroup}>
-                        <label htmlFor="horario">Horário</label>
-                        <input 
-                            id="horario" 
-                            name="horario" 
-                            type="text" 
-                            placeholder="Filtrar horário" 
-                            value={filters.horario || ''} 
-                            onChange={handleFilterChange} 
-                        />
-                    </div>
-                    
-                    {/* Escala */}
-                    <div className={styles.formGroup}>
-                        <label htmlFor="escala">Escala</label>
-                        <input 
-                            id="escala" 
-                            name="escala" 
-                            type="text" 
-                            placeholder="Filtrar escala" 
-                            value={filters.escala || ''} 
-                            onChange={handleFilterChange} 
-                        />
-                    </div>
-                    
-                    {/* Estado (UF) */}
-                    <div className={styles.formGroup}>
-                        <label htmlFor="sigla_local">Estado (UF)</label>
-                        <input 
-                            id="sigla_local" 
-                            name="sigla_local" 
-                            type="text" 
-                            placeholder="Filtrar estado" 
-                            value={filters.sigla_local || ''} 
-                            onChange={handleFilterChange} 
-                        />
-                    </div>
-                    
-                    {/* Município */}
-                    <div className={styles.formGroup}>
-                        <label htmlFor="municipio_local_trabalho">Município</label>
-                        <input 
-                            id="municipio_local_trabalho" 
-                            name="municipio_local_trabalho" 
-                            type="text" 
-                            placeholder="Filtrar município" 
-                            value={filters.municipio_local_trabalho || ''} 
-                            onChange={handleFilterChange} 
-                        />
-                    </div>
-
-                    {/* Linha 3 - 5 filtros */}
-                    {/* Gestão Contrato */}
-                    <div className={styles.formGroup}>
-                        <label htmlFor="des_grupo_contrato">Gestão Contrato</label>
-                        <input 
-                            id="des_grupo_contrato" 
-                            name="des_grupo_contrato" 
-                            type="text" 
-                            placeholder="Filtrar gestão" 
-                            value={filters.des_grupo_contrato || ''} 
-                            onChange={handleFilterChange} 
-                        />
-                    </div>
-                    
-                    {/* ID Gestão */}
-                    <div className={styles.formGroup}>
-                        <label htmlFor="id_grupo_contrato">ID Gestão</label>
-                        <input 
-                            id="id_grupo_contrato" 
-                            name="id_grupo_contrato" 
-                            type="text" 
-                            placeholder="Filtrar ID gestão" 
-                            value={filters.id_grupo_contrato || ''} 
-                            onChange={handleFilterChange} 
-                        />
-                    </div>
-                    
-                    {/* Convenção */}
-                    <div className={styles.formGroup}>
-                        <label htmlFor="convencao">Convenção</label>
-                        <input 
-                            id="convencao" 
-                            name="convencao" 
-                            type="text" 
-                            placeholder="Filtrar convenção" 
-                            value={filters.convencao || ''} 
-                            onChange={handleFilterChange} 
-                        />
-                    </div>
-                    
-                    {/* Próximo Período */}
-                    <div className={styles.formGroup}>
-                        <label htmlFor="proximo_periodo_aquisitivo_texto">Próx. Período</label>
-                        <input 
-                            id="proximo_periodo_aquisitivo_texto" 
-                            name="proximo_periodo_aquisitivo_texto" 
-                            type="text" 
-                            placeholder="Filtrar período" 
-                            value={filters.proximo_periodo_aquisitivo_texto || ''} 
-                            onChange={handleFilterChange} 
-                        />
-                    </div>
-                    
-                    {/* Qtd. Faltas */}
-                    <div className={styles.formGroup}>
-                        <label htmlFor="faltas_injustificadas_periodo">Qtd. Faltas</label>
-                        <input 
-                            id="faltas_injustificadas_periodo" 
-                            name="faltas_injustificadas_periodo" 
-                            type="number" 
-                            placeholder="Número de faltas" 
-                            value={filters.faltas_injustificadas_periodo || ''} 
-                            onChange={handleFilterChange} 
-                        />
-                    </div>
-
-                    {/* Linha 4 - Filtros de Data e Botão Limpar */}
-                    {/* Data Admissão */}
-                    <div className={styles.formGroup}>
-                        <label htmlFor="dth_admissao">Data Admissão</label>
-                        <input 
-                            id="dth_admissao" 
-                            name="dth_admissao" 
-                            type="date" 
-                            value={filters.dth_admissao || ''} 
-                            onChange={handleFilterChange} 
-                        />
-                    </div>
-                    
-                    {/* Início Período */}
-                    <div className={styles.formGroup}>
-                        <label htmlFor="periodo_aquisitivo_atual_inicio">Início Período</label>
-                        <input 
-                            id="periodo_aquisitivo_atual_inicio" 
-                            name="periodo_aquisitivo_atual_inicio" 
-                            type="date" 
-                            value={filters.periodo_aquisitivo_atual_inicio || ''} 
-                            onChange={handleFilterChange} 
-                        />
-                    </div>
-                    
-                    {/* Fim Período */}
-                    <div className={styles.formGroup}>
-                        <label htmlFor="periodo_aquisitivo_atual_fim">Fim Período</label>
-                        <input 
-                            id="periodo_aquisitivo_atual_fim" 
-                            name="periodo_aquisitivo_atual_fim" 
-                            type="date" 
-                            value={filters.periodo_aquisitivo_atual_fim || ''} 
-                            onChange={handleFilterChange} 
-                        />
-                    </div>
-                    
-                    {/* Data Limite Férias */}
-                    <div className={styles.formGroup}>
-                        <label htmlFor="dth_limite_ferias">Data Limite Férias</label>
-                        <input 
-                            id="dth_limite_ferias" 
-                            name="dth_limite_ferias" 
-                            type="date" 
-                            value={filters.dth_limite_ferias || ''} 
-                            onChange={handleFilterChange} 
-                        />
-                    </div>
-                    
-                    {/* Botão Limpar */}
-                    <div className={styles.filterActions}>
-                        <Button 
-                            variant="secondary" 
-                            onClick={handleClearFilters} 
-                            icon={<XCircle size={16}/>}
-                        >
-                            Limpar Todos
-                        </Button>
-                    </div>
+                    <div className={styles.formGroup}><label htmlFor="matricula">Matrícula</label><input id="matricula" name="matricula" type="text" placeholder="Filtrar por matrícula" value={filters.matricula || ''} onChange={handleFilterChange} /></div>
+                    <div className={styles.formGroup}><label htmlFor="situacao_ferias_afastamento_hoje">Situação Atual</label><input id="situacao_ferias_afastamento_hoje" name="situacao_ferias_afastamento_hoje" type="text" placeholder="Filtrar situação" value={filters.situacao_ferias_afastamento_hoje || ''} onChange={handleFilterChange} /></div>
+                    <div className={styles.formGroup}><label htmlFor="categoria">Categoria/Cargo</label><input id="categoria" name="categoria" type="text" placeholder="Filtrar por cargo" value={filters.categoria || ''} onChange={handleFilterChange} /></div>
+                    <div className={styles.formGroup}><label htmlFor="categoria_trab">Cat. Trabalhador</label><input id="categoria_trab" name="categoria_trab" type="text" placeholder="Categoria trabalhador" value={filters.categoria_trab || ''} onChange={handleFilterChange} /></div>
+                    <div className={styles.formGroup}><label htmlFor="horario">Horário</label><input id="horario" name="horario" type="text" placeholder="Filtrar horário" value={filters.horario || ''} onChange={handleFilterChange} /></div>
+                    <div className={styles.formGroup}><label htmlFor="escala">Escala</label><input id="escala" name="escala" type="text" placeholder="Filtrar escala" value={filters.escala || ''} onChange={handleFilterChange} /></div>
+                    <div className={styles.formGroup}><label htmlFor="sigla_local">Estado (UF)</label><input id="sigla_local" name="sigla_local" type="text" placeholder="Filtrar estado" value={filters.sigla_local || ''} onChange={handleFilterChange} /></div>
+                    <div className={styles.formGroup}><label htmlFor="municipio_local_trabalho">Município</label><input id="municipio_local_trabalho" name="municipio_local_trabalho" type="text" placeholder="Filtrar município" value={filters.municipio_local_trabalho || ''} onChange={handleFilterChange} /></div>
+                    <div className={styles.formGroup}><label htmlFor="des_grupo_contrato">Gestão Contrato</label><input id="des_grupo_contrato" name="des_grupo_contrato" type="text" placeholder="Filtrar gestão" value={filters.des_grupo_contrato || ''} onChange={handleFilterChange} /></div>
+                    <div className={styles.formGroup}><label htmlFor="id_grupo_contrato">ID Gestão</label><input id="id_grupo_contrato" name="id_grupo_contrato" type="text" placeholder="Filtrar ID gestão" value={filters.id_grupo_contrato || ''} onChange={handleFilterChange} /></div>
+                    <div className={styles.formGroup}><label htmlFor="convencao">Convenção</label><input id="convencao" name="convencao" type="text" placeholder="Filtrar convenção" value={filters.convencao || ''} onChange={handleFilterChange} /></div>
+                    <div className={styles.formGroup}><label htmlFor="proximo_periodo_aquisitivo_texto">Próx. Período</label><input id="proximo_periodo_aquisitivo_texto" name="proximo_periodo_aquisitivo_texto" type="text" placeholder="Filtrar período" value={filters.proximo_periodo_aquisitivo_texto || ''} onChange={handleFilterChange} /></div>
+                    <div className={styles.formGroup}><label htmlFor="faltas_injustificadas_periodo">Qtd. Faltas</label><input id="faltas_injustificadas_periodo" name="faltas_injustificadas_periodo" type="number" placeholder="Número de faltas" value={filters.faltas_injustificadas_periodo || ''} onChange={handleFilterChange} /></div>
+                    <div className={styles.formGroup}><label htmlFor="dth_admissao">Data Admissão</label><input id="dth_admissao" name="dth_admissao" type="date" value={filters.dth_admissao || ''} onChange={handleFilterChange} /></div>
+                    <div className={styles.formGroup}><label htmlFor="periodo_aquisitivo_atual_inicio">Início Período</label><input id="periodo_aquisitivo_atual_inicio" name="periodo_aquisitivo_atual_inicio" type="date" value={filters.periodo_aquisitivo_atual_inicio || ''} onChange={handleFilterChange} /></div>
+                    <div className={styles.formGroup}><label htmlFor="periodo_aquisitivo_atual_fim">Fim Período</label><input id="periodo_aquisitivo_atual_fim" name="periodo_aquisitivo_atual_fim" type="date" value={filters.periodo_aquisitivo_atual_fim || ''} onChange={handleFilterChange} /></div>
+                    <div className={styles.formGroup}><label htmlFor="dth_limite_ferias">Data Limite Férias</label><input id="dth_limite_ferias" name="dth_limite_ferias" type="date" value={filters.dth_limite_ferias || ''} onChange={handleFilterChange} /></div>
+                    <div className={styles.filterActions}><Button variant="secondary" onClick={handleClearFilters} icon={<XCircle size={16}/>}>Limpar Todos</Button></div>
                 </div>
             )}
             
@@ -781,74 +553,40 @@ function FuncionariosComponent() {
                     <thead>
                         <tr>
                             <th className={`${styles.stickyColumn} ${styles.checkboxCell}`}>
-                                <input 
-                                    type="checkbox" 
-                                    checked={selectAll}
-                                    onChange={(e) => handleSelectAll(e.target.checked)}
-                                />
+                                <input type="checkbox" checked={selectAll} onChange={(e) => handleSelectAll(e.target.checked)} />
                             </th>
                             {columns.map(col => (
-                                <th 
-                                    key={col.accessor} 
-                                    className={col.sticky ? styles.stickyColumn : ''}
-                                >
-                                    {col.header}
-                                </th>
+                                <th key={col.accessor} className={col.sticky ? styles.stickyColumn : ''}>{col.header}</th>
                             ))}
                         </tr>
                     </thead>
                     <tbody>
                         {isLoading ? (
-                            <tr>
-                                <td colSpan={columns.length + 1} className={styles.loading}>
-                                    Carregando funcionários...
-                                </td>
-                            </tr>
+                            <tr><td colSpan={columns.length + 1} className={styles.loading}>Carregando funcionários...</td></tr>
                         ) : paginatedData.length === 0 ? (
-                            <tr>
-                                <td colSpan={columns.length + 1} className={styles.noData}>
-                                    {funcionariosFiltrados.length === 0 && (searchTerm || Object.keys(filters).some(k => filters[k])) 
-                                        ? 'Nenhum funcionário encontrado com os filtros atuais.' 
-                                        : 'Nenhum funcionário cadastrado.'}
-                                </td>
-                            </tr>
+                            <tr><td colSpan={columns.length + 1} className={styles.noData}>{funcionariosFiltrados.length === 0 && (searchTerm || Object.keys(filters).some(k => filters[k])) ? 'Nenhum funcionário encontrado com os filtros atuais.' : 'Nenhum funcionário cadastrado.'}</td></tr>
                         ) : (
                             paginatedData.map(row => {
                                 const isSelected = selectedFuncionarios.includes(row.matricula);
                                 return (
-                                    <tr 
-                                        key={row.matricula}
-                                        className={isSelected ? styles.selectedRow : ''}
-                                    >
-                                        <td className={`${styles.stickyColumn} ${styles.checkboxCell}`}>
-                                            <input 
-                                                type="checkbox" 
-                                                checked={isSelected}
-                                                onChange={(e) => handleSelectFuncionario(row.matricula, e.target.checked)}
-                                            />
-                                        </td>
-                                        <td className={styles.stickyColumn}>
-                                            <ActionMenu items={getActionItems(row)} />
-                                        </td>
+                                    <tr key={row.matricula} className={isSelected ? styles.selectedRow : ''}>
+                                        <td className={`${styles.stickyColumn} ${styles.checkboxCell}`}><input type="checkbox" checked={isSelected} onChange={(e) => handleSelectFuncionario(row.matricula, e.target.checked)} /></td>
+                                        <td className={styles.stickyColumn}><ActionMenu items={getActionItems(row)} /></td>
                                         <td>{row.matricula}</td>
-                                        <td>
-                                            <Link href={`/funcionarios/${row.matricula}`} className={styles.nomeLink}>
-                                                {row.nome_funcionario}
-                                            </Link>
-                                        </td>
+                                        <td><Link href={`/funcionarios/${row.matricula}`} className={styles.nomeLink}>{row.nome_funcionario}</Link></td>
                                         <td><StatusBadge status={row.status} /></td>
-                                        <td className={styles.situacaoCell}>
-                                            {row.situacao_ferias_afastamento_hoje || '---'}
+                                        <td style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'center' }}>
+                                            {row.saldo_dias_ferias < 30 && <AlertCircle size={14} color="#f59e0b" title="Direito a férias proporcionais" />}
+                                            {row.saldo_dias_ferias}
                                         </td>
+                                        <td className={styles.situacaoCell}>{row.situacao_ferias_afastamento_hoje || '---'}</td>
                                         <td>{formatDateForDisplay(row.dth_admissao)}</td>
                                         <td>{row.proximo_periodo_aquisitivo_texto || '---'}</td>
                                         <td>{formatDateForDisplay(row.periodo_aquisitivo_atual_inicio)}</td>
                                         <td>{formatDateForDisplay(row.periodo_aquisitivo_atual_fim)}</td>
                                         <td>
                                             <div className={styles.limiteCell}>
-                                                <RiskIndicator 
-                                                    dias={row.dth_limite_ferias ? Math.floor((new Date(row.dth_limite_ferias) - new Date()) / (1000 * 60 * 60 * 24)) : null} 
-                                                />
+                                                <RiskIndicator dias={row.dth_limite_ferias ? Math.floor((new Date(row.dth_limite_ferias) - new Date()) / (1000 * 60 * 60 * 24)) : null} />
                                                 <span>{formatDateForDisplay(row.dth_limite_ferias)}</span>
                                             </div>
                                         </td>
@@ -872,41 +610,17 @@ function FuncionariosComponent() {
 
             {/* INFORMAÇÕES E PAGINAÇÃO */}
             {!isLoading && funcionariosFiltrados.length > 0 && (
-                <div style={{ 
-                    display: 'flex', 
-                    justifyContent: 'space-between', 
-                    alignItems: 'center', 
-                    padding: '1rem 0',
-                    borderTop: '1px solid #e2e8f0',
-                    fontSize: '0.9rem',
-                    color: '#6b7280'
-                }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem 0', borderTop: '1px solid #e2e8f0', fontSize: '0.9rem', color: '#6b7280' }}>
                     <div>
                         Mostrando {((currentPage - 1) * itemsPerPage) + 1} a {Math.min(currentPage * itemsPerPage, funcionariosFiltrados.length)} de {funcionariosFiltrados.length} funcionários
-                        {selectedFuncionarios.length > 0 && (
-                            <span style={{ marginLeft: '1rem', fontWeight: '500' }}>
-                                • {selectedFuncionarios.length} selecionados
-                            </span>
-                        )}
+                        {selectedFuncionarios.length > 0 && (<span style={{ marginLeft: '1rem', fontWeight: '500' }}>• {selectedFuncionarios.length} selecionados</span>)}
                     </div>
                 </div>
             )}
 
-            {/* PAGINAÇÃO */}
-            {paginationInfo.totalPages > 1 && (
-                <Pagination 
-                    pagination={paginationInfo} 
-                    onPageChange={setCurrentPage} 
-                />
-            )}
+            {paginationInfo.totalPages > 1 && (<Pagination pagination={paginationInfo} onPageChange={setCurrentPage} />)}
             
-            {/* MODAL */}
-            <Modal 
-                isOpen={modalState.isOpen} 
-                onClose={closeModal} 
-                title={getModalTitle()}
-                size={modalState.type === 'excluir' || modalState.type === 'bulkDelete' ? 'small' : 'large'}
-            >
+            <Modal isOpen={modalState.isOpen} onClose={closeModal} title={getModalTitle()} size={modalState.type === 'excluir' || modalState.type === 'bulkDelete' ? 'small' : 'large'}>
                 {renderModalContent()}
             </Modal>
         </div>
@@ -916,14 +630,7 @@ function FuncionariosComponent() {
 export default function FuncionariosPage() {
     return (
         <Suspense fallback={
-            <div style={{ 
-                display: 'flex', 
-                justifyContent: 'center', 
-                alignItems: 'center', 
-                height: '200px',
-                fontSize: '1.1rem',
-                color: '#6b7280'
-            }}>
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '200px', fontSize: '1.1rem', color: '#6b7280' }}>
                 Carregando painel de funcionários...
             </div>
         }>

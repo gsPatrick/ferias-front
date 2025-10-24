@@ -42,9 +42,6 @@ const api = {
     importPlanilha: (formData) => apiClient.post('/funcionarios/import', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
     }),
-    // ==========================================================
-    // NOVO MÉTODO ADICIONADO AQUI PARA CORRIGIR OS FILTROS
-    // ==========================================================
     getFilterOptions: () => apiClient.get('/funcionarios/filter-options'),
   },
 
@@ -73,6 +70,16 @@ const api = {
     restaurar: (id) => apiClient.put(`/planejamentos/${id}/ativar`),
     getVisaoGeral: (ano, mes, filters) => apiClient.get('/planejamentos/visao-geral', { params: { ano, mes, ...filters } }),
   },
+
+  // ==========================================================
+  // NOVO MÓDULO ADICIONADO AQUI
+  // ==========================================================
+  substitutos: {
+    getAll: () => apiClient.get('/substitutos'),
+    create: (data) => apiClient.post('/substitutos', data),
+    update: (id, data) => apiClient.put(`/substitutos/${id}`, data),
+    remove: (id) => apiClient.delete(`/substitutos/${id}`),
+  },
   
   users: {
     getAll: () => apiClient.get('/users'),
@@ -83,6 +90,7 @@ const api = {
   
   relatorios: {
     exportarFuncionarios: (params, matriculas) => apiClient.post(`/relatorios/funcionarios`, { matriculas }, { params, responseType: 'blob' }),
+    exportarPlanejamento: (params) => apiClient.get('/relatorios/planejamento', { params, responseType: 'blob' }),
     getRiscoVencimento: (dias) => apiClient.get(`/relatorios/risco-vencimento?dias=${dias}`, { responseType: 'blob' }),
     getProjecaoCustos: (ano) => apiClient.get(`/relatorios/projecao-custos?ano=${ano}`, { responseType: 'blob' }),
     getAvisoFerias: (feriasId) => apiClient.get(`/relatorios/aviso-ferias/${feriasId}`, { responseType: 'blob' }),

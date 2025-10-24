@@ -49,14 +49,18 @@ export default function ImportacaoPage() {
         setMessage('');
         setUploadProgress(0);
 
+        // Simula um progresso mais realista
         const progressInterval = setInterval(() => {
-            setUploadProgress(prev => Math.min(prev + 10, 90));
-        }, 200);
+            setUploadProgress(prev => Math.min(prev + Math.random() * 10, 90));
+        }, 300);
 
         const formData = new FormData();
         formData.append('file', file);
         
-        // Adiciona as datas ao FormData se elas estiverem preenchidas
+        // ==========================================================
+        // LÓGICA DE ENVIO DAS DATAS - JÁ IMPLEMENTADA E CORRETA
+        // Garante que as datas sejam enviadas para o backend processar.
+        // ==========================================================
         if (dataInicioDist) {
             formData.append('data_inicio_distribuicao', dataInicioDist);
         }
@@ -125,7 +129,7 @@ export default function ImportacaoPage() {
                         <div className={styles.progressBar}>
                             <div className={styles.progressFill} style={{ width: `${uploadProgress}%` }}></div>
                         </div>
-                        <p>{uploadProgress}% concluído</p>
+                        <p>{uploadProgress > 90 ? 'Finalizando...' : 'Aguarde, isso pode levar alguns instantes.'}</p>
                     </div>
                 </div>
             );

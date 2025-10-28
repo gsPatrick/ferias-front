@@ -25,7 +25,7 @@
     align-items: center;
     margin-bottom: 2rem;
     flex-wrap: wrap;
-    gap: 1rem;
+    gap: 0.5rem; /* Reduz o gap para caber tudo */
 }
 
 .pageTitle {
@@ -206,8 +206,6 @@
     to { opacity: 1; transform: translateY(0); }
 }
 
-/* Adicione estas classes no final de src/app/(dashboard)/dashboard/dashboard.module.css */
-
 .noActions {
     text-align: center;
     padding: 2rem;
@@ -249,4 +247,87 @@
 .modalListMatricula {
     font-size: 0.8rem;
     color: var(--cor-cinza-medio);
+}
+
+/* NOVOS ESTILOS PARA FILTRO DE ANO */
+.yearSelectorContainer {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-left: 1.5rem;
+    margin-right: auto;
+}
+
+.yearSelectorContainer label {
+    font-weight: 500;
+    color: var(--cor-cinza-medio);
+}
+
+.yearSelector {
+    padding: 0.5rem 1rem;
+    border-radius: var(--raio-borda);
+    border: 1px solid #E5E7EB;
+    background-color: var(--cor-branco);
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+}
+
+.loadingOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(255, 255, 255, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.2rem;
+    color: var(--cor-primaria-profundo);
+    z-index: 100;
+}
+
+@media (max-width: 768px) {
+    .header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .yearSelectorContainer {
+        margin: 1rem 0 0.5rem;
+        justify-content: center;
+    }
+}
+
+/* Adicione estas classes no final de src/app/(dashboard)/dashboard/dashboard.module.css */
+
+.headerActions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-left: auto;
+}
+
+/* Ajustes no header para acomodar o seletor */
+@media (max-width: 992px) {
+    .header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+    .headerActions {
+        width: 100%;
+        justify-content: space-between;
+    }
+    .yearSelectorContainer {
+        margin-left: 0;
+        flex-grow: 1;
+    }
+}
+
+@media (max-width: 480px) {
+    .headerActions {
+        flex-direction: column;
+        align-items: stretch;
+    }
 }

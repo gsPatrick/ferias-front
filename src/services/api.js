@@ -30,7 +30,8 @@ const api = {
   },
   
   dashboard: {
-    getSummary: () => apiClient.get('/dashboard/summary'),
+    // ALTERAÇÃO: A função agora aceita um objeto de parâmetros genérico
+    getSummary: (params) => apiClient.get('/dashboard/summary', { params }),
   },
 
   funcionarios: {

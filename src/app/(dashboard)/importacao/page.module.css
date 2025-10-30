@@ -3,19 +3,14 @@
 .container {
     display: flex;
     flex-direction: column;
-    gap: 3rem;
+    gap: 2.5rem; /* Aumenta o espaço entre os cards */
     padding: 2rem;
-    max-width: 1200px;
+    max-width: 900px; /* Limita a largura para melhor leitura */
     margin: 0 auto;
 }
 
-.uploadSection {
-    display: flex;
-    justify-content: center;
-    padding-top: 2rem;
-}
-
-.uploadCard {
+/* NOVO: Estilo base para os cards de seção */
+.sectionCard {
     background: white;
     border-radius: 24px;
     padding: 2rem;
@@ -23,13 +18,11 @@
         0 20px 25px -5px rgba(0, 0, 0, 0.04),
         0 10px 10px -5px rgba(0, 0, 0, 0.04);
     border: 1px solid rgba(229, 231, 235, 0.5);
-    width: 100%;
-    max-width: 600px;
     position: relative;
     overflow: hidden;
 }
 
-.uploadCard::before {
+.sectionCard::before {
     content: '';
     position: absolute;
     top: 0;
@@ -39,6 +32,30 @@
     background: linear-gradient(90deg, var(--cor-primaria-medio), var(--cor-primaria-claro));
 }
 
+.sectionHeader {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    color: var(--cor-primaria-profundo);
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.sectionHeader h2 {
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+.sectionDescription {
+    font-size: 0.95rem;
+    color: var(--cor-cinza-medio);
+    line-height: 1.6;
+    margin-bottom: 2rem;
+}
+
+
+/* Estilos antigos agora aplicados dentro do card */
 .dropzone {
     border: 3px dashed #E5E7EB;
     border-radius: 16px;
@@ -193,9 +210,6 @@
     cursor: not-allowed;
 }
 
-/* ========================================================== */
-/* NOVOS ESTILOS PARA A SEÇÃO DE OPÇÕES (PONTO #1) */
-/* ========================================================== */
 .optionsSection {
     margin-top: 2rem;
     padding-top: 1.5rem;
@@ -234,7 +248,7 @@
     color: var(--cor-primaria-profundo);
 }
 
-.dateInput {
+.formGroup input, .dateInput {
     padding: 0.75rem 1rem;
     border: 1.5px solid #e2e8f0;
     border-radius: 8px;
@@ -243,15 +257,19 @@
     transition: all 0.2s ease;
 }
 
-.dateInput:focus {
+.formGroup input:focus, .dateInput:focus {
     outline: none;
     border-color: var(--cor-primaria-medio);
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
-/* ========================================================== */
-/* FIM DOS NOVOS ESTILOS */
-/* ========================================================== */
 
+/* NOVO: Grid para o formulário manual */
+.manualFormGrid {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
 
 .statusMessage {
     display: flex;
@@ -263,177 +281,39 @@
     animation: slideIn 0.4s ease-out;
 }
 
-.statusIcon {
-    flex-shrink: 0;
-    margin-top: 0.125rem;
-}
+.statusIcon { flex-shrink: 0; margin-top: 0.125rem; }
+.statusContent h3 { font-size: 1.1rem; font-weight: 600; margin-bottom: 0.5rem; }
+.statusContent p { font-size: 0.95rem; opacity: 0.9; }
+.statusMessage.success { background: linear-gradient(135deg, #d1fae5, #a7f3d0); color: #065f46; border: 1px solid #a7f3d0; }
+.statusMessage.error { background: linear-gradient(135deg, #fef2f2, #fecaca); color: #991b1b; border: 1px solid #fecaca; }
+.statusMessage.uploading { background: linear-gradient(135deg, #eff6ff, #dbeafe); color: #1e40af; border: 1px solid #dbeafe; }
 
-.statusContent h3 {
-    font-size: 1.1rem;
-    font-weight: 600;
-    margin-bottom: 0.5rem;
-}
+.progressBar { width: 100%; height: 8px; background: rgba(255, 255, 255, 0.3); border-radius: 4px; overflow: hidden; margin: 0.75rem 0; }
+.progressFill { height: 100%; background: linear-gradient(90deg, #3b82f6, #1d4ed8); border-radius: 4px; transition: width 0.3s ease; position: relative; }
+.progressFill::after { content: ''; position: absolute; top: 0; left: 0; bottom: 0; right: 0; background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent); animation: shimmer 1.5s infinite; }
+@keyframes shimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+.spinner, .buttonSpinner { width: 20px; height: 20px; border: 2px solid rgba(59, 130, 246, 0.3); border-radius: 50%; border-top-color: #3b82f6; animation: spin 1s linear infinite; }
+.buttonSpinner { width: 16px; height: 16px; border-color: rgba(255, 255, 255, 0.3); border-top-color: white; }
+@keyframes spin { to { transform: rotate(360deg); } }
 
-.statusContent p {
-    font-size: 0.95rem;
-    opacity: 0.9;
-}
-
-.statusMessage.success {
-    background: linear-gradient(135deg, #d1fae5, #a7f3d0);
-    color: #065f46;
-    border: 1px solid #a7f3d0;
-}
-
-.statusMessage.error {
-    background: linear-gradient(135deg, #fef2f2, #fecaca);
-    color: #991b1b;
-    border: 1px solid #fecaca;
-}
-
-.statusMessage.uploading {
-    background: linear-gradient(135deg, #eff6ff, #dbeafe);
-    color: #1e40af;
-    border: 1px solid #dbeafe;
-}
-
-.progressBar {
-    width: 100%;
-    height: 8px;
-    background: rgba(255, 255, 255, 0.3);
-    border-radius: 4px;
-    overflow: hidden;
-    margin: 0.75rem 0;
-}
-
-.progressFill {
-    height: 100%;
-    background: linear-gradient(90deg, #3b82f6, #1d4ed8);
-    border-radius: 4px;
-    transition: width 0.3s ease;
-    position: relative;
-}
-
-.progressFill::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    bottom: 0;
-    right: 0;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-    animation: shimmer 1.5s infinite;
-}
-
-@keyframes shimmer {
-    0% { transform: translateX(-100%); }
-    100% { transform: translateX(100%); }
-}
-
-.spinner, .buttonSpinner {
-    width: 20px;
-    height: 20px;
-    border: 2px solid rgba(59, 130, 246, 0.3);
-    border-radius: 50%;
-    border-top-color: #3b82f6;
-    animation: spin 1s linear infinite;
-}
-
-.buttonSpinner {
-    width: 16px;
-    height: 16px;
-    border-color: rgba(255, 255, 255, 0.3);
-    border-top-color: white;
-}
-
-@keyframes spin {
-    to { transform: rotate(360deg); }
-}
-
-.actions {
-    display: flex;
-    justify-content: center;
-    margin-top: 2rem;
-}
-
-.uploadButton {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    background: linear-gradient(135deg, var(--cor-primaria-medio), var(--cor-primaria-claro));
-    border: none;
-    padding: 1rem 2rem;
-    border-radius: 12px;
-    color: white;
-    font-weight: 600;
-    font-size: 1rem;
-    cursor: pointer;
-    transition: all 0.3s;
-    box-shadow: 0 10px 20px rgba(59, 130, 246, 0.2);
-}
-
-.uploadButton:hover:not(:disabled) {
-    transform: translateY(-2px);
-    box-shadow: 0 15px 30px rgba(59, 130, 246, 0.3);
-}
-
-.uploadButton:disabled {
-    opacity: 0.7;
-    cursor: not-allowed;
-    transform: none;
-}
-
-.newUploadButton {
-    background: linear-gradient(135deg, #10b981, #059669);
-    box-shadow: 0 10px 20px rgba(16, 185, 129, 0.2);
-}
-
-.newUploadButton:hover {
-    box-shadow: 0 15px 30px rgba(16, 185, 129, 0.3);
-}
-
-.fadeIn {
-    animation: fadeIn 0.5s ease-out;
-}
-
-.slideIn {
-    animation: slideIn 0.4s ease-out;
-}
-
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-@keyframes slideIn {
-    from {
-        opacity: 0;
-        transform: translateX(-20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateX(0);
-    }
-}
+.actions { display: flex; justify-content: center; margin-top: 2rem; }
+.uploadButton, .generateButton { display: flex; align-items: center; gap: 0.5rem; border: none; padding: 1rem 2rem; border-radius: 12px; color: white; font-weight: 600; font-size: 1rem; cursor: pointer; transition: all 0.3s; }
+.uploadButton { background: linear-gradient(135deg, var(--cor-primaria-medio), var(--cor-primaria-claro)); box-shadow: 0 10px 20px rgba(59, 130, 246, 0.2); }
+.generateButton { background: linear-gradient(135deg, #6d28d9, #8b5cf6); box-shadow: 0 10px 20px rgba(109, 40, 217, 0.2); }
+.uploadButton:hover:not(:disabled), .generateButton:hover:not(:disabled) { transform: translateY(-2px); }
+.uploadButton:hover:not(:disabled) { box-shadow: 0 15px 30px rgba(59, 130, 246, 0.3); }
+.generateButton:hover:not(:disabled) { box-shadow: 0 15px 30px rgba(109, 40, 217, 0.3); }
+.uploadButton:disabled, .generateButton:disabled { opacity: 0.7; cursor: not-allowed; transform: none; }
+.newUploadButton { background: linear-gradient(135deg, #10b981, #059669); box-shadow: 0 10px 20px rgba(16, 185, 129, 0.2); }
+.newUploadButton:hover { box-shadow: 0 15px 30px rgba(16, 185, 129, 0.3); }
+.fadeIn { animation: fadeIn 0.5s ease-out; }
+.slideIn { animation: slideIn 0.4s ease-out; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes slideIn { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }
 
 @media (max-width: 768px) {
-    .container {
-        padding: 1rem;
-    }
-    .uploadCard {
-        padding: 2rem 1.5rem;
-    }
-    .dropzone {
-        padding: 3rem 1rem;
-    }
-    .dateInputs {
-        grid-template-columns: 1fr;
-        gap: 1rem;
-    }
+    .container { padding: 1rem; }
+    .sectionCard { padding: 1.5rem; }
+    .dropzone { padding: 3rem 1rem; }
+    .dateInputs, .manualFormGrid { grid-template-columns: 1fr; gap: 1rem; }
 }
